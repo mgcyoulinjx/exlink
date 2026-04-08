@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pio run:*)",
+      "Bash(find . -name \"lv_obj_scroll.h\" -exec cat {} \\\\;)",
+      "Bash(python -m platformio run)"
+    ]
+  }
+}
