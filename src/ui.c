@@ -1,4 +1,4 @@
-#include <Arduino.h>
+﻿#include <Arduino.h>
 #include "ui.h"
 #include "event.h"
 
@@ -12,33 +12,32 @@ static int32_t get_saved_slider_value(void) {
     return 10;
 }
 
-// 第二阶段恢复：在焦点设置后再次确保滚动位置
+// 绗簩闃舵鎭㈠锛氬湪鐒︾偣璁剧疆鍚庡啀娆＄‘淇濇粴鍔ㄤ綅缃?
 static void restore_scroll_phase2(void *param) {
     (void)param;
     if (panel) {
         lv_obj_update_layout(panel);
         lv_obj_scroll_to_y(panel, saved_scroll_y, LV_ANIM_OFF);
-        // 恢复滚动方向和滚动到焦点功能
+        // 鎭㈠婊氬姩鏂瑰悜鍜屾粴鍔ㄥ埌鐒︾偣鍔熻兘
         lv_obj_set_scroll_dir(panel, LV_DIR_VER);
         lv_obj_add_flag(panel, LV_OBJ_FLAG_SCROLL_ON_FOCUS);
     }
 }
 
-// 延迟恢复主屏幕状态（在下一帧执行）
+// 寤惰繜鎭㈠涓诲睆骞曠姸鎬侊紙鍦ㄤ笅涓€甯ф墽琛岋級
 static void delayed_restore_state(void *param) {
-    (void)param; // 未使用参数
-
+    (void)param; // 鏈娇鐢ㄥ弬鏁?
     if (slider) {
         lv_slider_set_value(slider, get_saved_slider_value(), LV_ANIM_OFF);
     }
 
-    // 先恢复滚动位置
+    // 鍏堟仮澶嶆粴鍔ㄤ綅缃?
     if (panel) {
         lv_obj_update_layout(panel);
         lv_obj_scroll_to_y(panel, saved_scroll_y, LV_ANIM_OFF);
     }
 
-    // 设置焦点
+    // 璁剧疆鐒︾偣
     if (group && saved_focused_index >= 1 && saved_focused_index <= 10) {
         lv_obj_t *btn = NULL;
         switch (saved_focused_index) {
@@ -54,7 +53,7 @@ static void delayed_restore_state(void *param) {
             case 10: btn = btn10; break;
         }
         if (btn) {
-            // 临时禁用 panel 滚动和滚动到焦点功能，防止焦点设置时自动滚动
+            // 涓存椂绂佺敤 panel 婊氬姩鍜屾粴鍔ㄥ埌鐒︾偣鍔熻兘锛岄槻姝㈢劍鐐硅缃椂鑷姩婊氬姩
             if (panel) {
                 lv_obj_set_scroll_dir(panel, LV_DIR_NONE);
                 lv_obj_clear_flag(panel, LV_OBJ_FLAG_SCROLL_ON_FOCUS);
@@ -63,17 +62,17 @@ static void delayed_restore_state(void *param) {
         }
     }
 
-    // 再次异步调用确保滚动位置（在焦点设置生效后）
+    // 鍐嶆寮傛璋冪敤纭繚婊氬姩浣嶇疆锛堝湪鐒︾偣璁剧疆鐢熸晥鍚庯級
     lv_async_call(restore_scroll_phase2, NULL);
 }
 
-// 定义线条的起始和结束位置
+// 瀹氫箟绾挎潯鐨勮捣濮嬪拰缁撴潫浣嶇疆
 #define LINE_X1 40
 #define LINE_X2 40
 #define LINE_Y1 45
 #define LINE_Y2 115
 
-// 创建样式对象
+// 鍒涘缓鏍峰紡瀵硅薄
 lv_style_t style_rect;
 
 extern double v, a, w;
@@ -234,7 +233,7 @@ void add_data2(lv_timer_t *timer)
     // lv_label_set_text(label1, voltageStr);
 }
 
-// 创建启动动画
+// 鍒涘缓鍚姩鍔ㄧ敾
 void create_boot_animation(void)
 {
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
@@ -246,32 +245,32 @@ void create_boot_animation(void)
     lv_obj_add_flag(ui_Image1, LV_OBJ_FLAG_ADV_HITTEST);
     lv_obj_clear_flag(ui_Image1, LV_OBJ_FLAG_SCROLLABLE);
 
-    // 初始化动画
+    // 鍒濆鍖栧姩鐢?
     lv_anim_t anim1;
-    lv_anim_init(&anim1);                                // 初始化动画结构体
-    lv_anim_set_exec_cb(&anim1, anim_cb1);               // 设置动画回调函数
-    lv_anim_set_var(&anim1, ui_Image1);                  // 设置动画作用的对象
-    lv_anim_set_time(&anim1, 450);                       // 设置动画时间
-    lv_anim_set_values(&anim1, 12, 60);                  // 设置运动轨迹
-    lv_anim_set_path_cb(&anim1, lv_anim_path_overshoot); // 使用“overshoot”路径效果，使动画更加生动
+    lv_anim_init(&anim1);                                // 鍒濆鍖栧姩鐢荤粨鏋勪綋
+    lv_anim_set_exec_cb(&anim1, anim_cb1);               // 璁剧疆鍔ㄧ敾鍥炶皟鍑芥暟
+    lv_anim_set_var(&anim1, ui_Image1);                  // 璁剧疆鍔ㄧ敾浣滅敤鐨勫璞?
+    lv_anim_set_time(&anim1, 450);                       // 璁剧疆鍔ㄧ敾鏃堕棿
+    lv_anim_set_values(&anim1, 12, 60);                  // 璁剧疆杩愬姩杞ㄨ抗
+    lv_anim_set_path_cb(&anim1, lv_anim_path_overshoot); // 浣跨敤鈥渙vershoot鈥濊矾寰勬晥鏋滐紝浣垮姩鐢绘洿鍔犵敓鍔?
 
     lv_obj_t *line = lv_line_create(lv_scr_act());
 
-    // 设置线条的起始和结束点
+    // 璁剧疆绾挎潯鐨勮捣濮嬪拰缁撴潫鐐?
     static lv_point_t points[] = {{LINE_X1, LINE_Y1}, {LINE_X2, LINE_Y2}};
     lv_line_set_points(line, points, 2);
 
-    // 设置线条的样式
+    // 璁剧疆绾挎潯鐨勬牱寮?
     lv_obj_set_style_line_width(line, 10, 0);
-    lv_obj_set_style_line_color(line, lv_color_hex(0xFF0000), 0); // 红色
+    lv_obj_set_style_line_color(line, lv_color_hex(0xFF0000), 0); // 绾㈣壊
     lv_obj_set_style_line_rounded(line, true, LV_PART_MAIN);
     lv_anim_t anim2;
-    lv_anim_init(&anim2);                                      // 初始化动画结构体
-    lv_anim_set_var(&anim2, line);                             // 设置动画作用的对象
-    lv_anim_set_exec_cb(&anim2, (lv_anim_exec_xcb_t)anim_cb2); // 设置动画回调函数
-    lv_anim_set_values(&anim2, -100, 15);                      // 设置运动轨迹
-    lv_anim_set_time(&anim2, 450);                             // 设置动画时间
-    lv_anim_set_path_cb(&anim2, lv_anim_path_overshoot);       // 动画路径线性
+    lv_anim_init(&anim2);                                      // 鍒濆鍖栧姩鐢荤粨鏋勪綋
+    lv_anim_set_var(&anim2, line);                             // 璁剧疆鍔ㄧ敾浣滅敤鐨勫璞?
+    lv_anim_set_exec_cb(&anim2, (lv_anim_exec_xcb_t)anim_cb2); // 璁剧疆鍔ㄧ敾鍥炶皟鍑芥暟
+    lv_anim_set_values(&anim2, -100, 15);                      // 璁剧疆杩愬姩杞ㄨ抗
+    lv_anim_set_time(&anim2, 450);                             // 璁剧疆鍔ㄧ敾鏃堕棿
+    lv_anim_set_path_cb(&anim2, lv_anim_path_overshoot);       // 鍔ㄧ敾璺緞绾挎€?
 
     ui_Image2 = lv_img_create(lv_scr_act());
     lv_img_set_src(ui_Image2, &Exlink_png);
@@ -281,37 +280,37 @@ void create_boot_animation(void)
     lv_obj_add_flag(ui_Image2, LV_OBJ_FLAG_ADV_HITTEST);
     lv_obj_clear_flag(ui_Image2, LV_OBJ_FLAG_SCROLLABLE);
     lv_anim_t anim3;
-    lv_anim_init(&anim3);                                      // 初始化动画结构体
-    lv_anim_set_var(&anim3, ui_Image2);                        // 设置动画作用的对象
-    lv_anim_set_exec_cb(&anim3, (lv_anim_exec_xcb_t)anim_cb2); // 设置动画回调函数
-    lv_anim_set_values(&anim3, 240, 150);                      // 设置运动轨迹
-    lv_anim_set_time(&anim3, 450);                             // 动画时间
-    lv_anim_set_path_cb(&anim3, lv_anim_path_overshoot);       // 动画路径线性
+    lv_anim_init(&anim3);                                      // 鍒濆鍖栧姩鐢荤粨鏋勪綋
+    lv_anim_set_var(&anim3, ui_Image2);                        // 璁剧疆鍔ㄧ敾浣滅敤鐨勫璞?
+    lv_anim_set_exec_cb(&anim3, (lv_anim_exec_xcb_t)anim_cb2); // 璁剧疆鍔ㄧ敾鍥炶皟鍑芥暟
+    lv_anim_set_values(&anim3, 240, 150);                      // 璁剧疆杩愬姩杞ㄨ抗
+    lv_anim_set_time(&anim3, 450);                             // 鍔ㄧ敾鏃堕棿
+    lv_anim_set_path_cb(&anim3, lv_anim_path_overshoot);       // 鍔ㄧ敾璺緞绾挎€?
 
-    lv_obj_t *label = lv_label_create(lv_scr_act()); /* 创建标签 */
-    lv_label_set_text(label, "");                    /* 设置文本内容 */
-    lv_obj_align(label, LV_ALIGN_TOP_LEFT, 0, 0);    /* 设置位置 */
+    lv_obj_t *label = lv_label_create(lv_scr_act()); /* 鍒涘缓鏍囩 */
+    lv_label_set_text(label, "");                    /* 璁剧疆鏂囨湰鍐呭 */
+    lv_obj_align(label, LV_ALIGN_TOP_LEFT, 0, 0);    /* 璁剧疆浣嶇疆 */
     lv_anim_t anim4;
-    lv_anim_init(&anim4);           // 初始化动画结构体
-    lv_anim_set_var(&anim4, label); // 设置动画作用的对象
+    lv_anim_init(&anim4);           // 鍒濆鍖栧姩鐢荤粨鏋勪綋
+    lv_anim_set_var(&anim4, label); // 璁剧疆鍔ㄧ敾浣滅敤鐨勫璞?
     lv_anim_set_ready_cb(&anim4, anim_end_callback);
-    lv_anim_set_exec_cb(&anim4, (lv_anim_exec_xcb_t)anim_cb2); // 设置动画回调函数
-    lv_anim_set_values(&anim4, 30, 30);                        // 设置动画轨迹
-    lv_anim_set_time(&anim4, 2000);                            // 设置动画时间为 2000 毫秒
-    lv_anim_set_path_cb(&anim4, lv_anim_path_overshoot);       // 动画路径线性
-    // lv_anim_start(&anim2); // 启动动画
+    lv_anim_set_exec_cb(&anim4, (lv_anim_exec_xcb_t)anim_cb2); // 璁剧疆鍔ㄧ敾鍥炶皟鍑芥暟
+    lv_anim_set_values(&anim4, 30, 30);                        // 璁剧疆鍔ㄧ敾杞ㄨ抗
+    lv_anim_set_time(&anim4, 2000);                            // 璁剧疆鍔ㄧ敾鏃堕棿涓?2000 姣
+    lv_anim_set_path_cb(&anim4, lv_anim_path_overshoot);       // 鍔ㄧ敾璺緞绾挎€?
+    // lv_anim_start(&anim2); // 鍚姩鍔ㄧ敾
 
-    // 设置动画时间线
+    // 璁剧疆鍔ㄧ敾鏃堕棿绾?
     lv_anim_timeline_t *anim_timeline = lv_anim_timeline_create();
     lv_anim_timeline_add(anim_timeline, 0, &anim1);
     lv_anim_timeline_add(anim_timeline, 150, &anim2);
     lv_anim_timeline_add(anim_timeline, 200, &anim3);
     lv_anim_timeline_add(anim_timeline, 200, &anim4);
-    // 启动动画时间线
+    // 鍚姩鍔ㄧ敾鏃堕棿绾?
     lv_anim_timeline_start(anim_timeline);
 }
 
-void ui_Screen1_screen_init(void) // 创建主界面
+void ui_Screen1_screen_init(void) // 鍒涘缓涓荤晫闈?
 {
     lv_obj_clean(lv_scr_act());
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
@@ -324,18 +323,18 @@ void ui_Screen1_screen_init(void) // 创建主界面
     lv_obj_set_style_anim_time(panel, 0, 0);
     lv_obj_set_style_border_width(panel, 0, 0);
     lv_obj_remove_style(panel, 0, LV_PART_SCROLLBAR);
-    lv_obj_set_flex_flow(panel, LV_FLEX_FLOW_COLUMN); // 垂直排列子对象
+    lv_obj_set_flex_flow(panel, LV_FLEX_FLOW_COLUMN); // 鍨傜洿鎺掑垪瀛愬璞?
     lv_obj_set_scroll_dir(panel, LV_DIR_VER);
     lv_obj_clear_flag(panel, LV_OBJ_FLAG_SCROLL_ON_FOCUS);
 
     lv_style_init(&style_rect);
-    // 设置边框的颜色和粗细
-    lv_style_set_border_color(&style_rect, lv_color_hex(0xFF0000)); // 红色边框
-    lv_style_set_border_width(&style_rect, 3);                      // 5 像素粗细
-    lv_style_set_bg_color(&style_rect, lv_color_hex(0x000000));     // 白色背景
-    lv_style_set_radius(&style_rect, 20);                           // 圆角半径
+    // 璁剧疆杈规鐨勯鑹插拰绮楃粏
+    lv_style_set_border_color(&style_rect, lv_color_hex(0xFF0000)); // 绾㈣壊杈规
+    lv_style_set_border_width(&style_rect, 3);                      // 5 鍍忕礌绮楃粏
+    lv_style_set_bg_color(&style_rect, lv_color_hex(0x000000));     // 鐧借壊鑳屾櫙
+    lv_style_set_radius(&style_rect, 20);                           // 鍦嗚鍗婂緞
 
-    // 设置聚焦状态的边框
+    // 璁剧疆鑱氱劍鐘舵€佺殑杈规
     static lv_style_t focused_style;
     lv_style_init(&focused_style);
     lv_style_set_border_color(&focused_style, lv_color_hex(0xFFD700));
@@ -344,7 +343,7 @@ void ui_Screen1_screen_init(void) // 创建主界面
     btn1 = lv_btn_create(panel);
     lv_obj_set_size(btn1, 215, 80);
     lv_obj_align(btn1, LV_ALIGN_OUT_RIGHT_TOP, 0, 0);
-    lv_obj_add_style(btn1, &style_rect, 0); // 将样式应用到矩形上
+    lv_obj_add_style(btn1, &style_rect, 0); // 灏嗘牱寮忓簲鐢ㄥ埌鐭╁舰涓?
     lv_obj_add_style(btn1, &focused_style, LV_STATE_FOCUSED);
     lv_obj_add_event_cb(btn1, btn1_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_t *btn1_label = lv_label_create(btn1);
@@ -359,7 +358,7 @@ void ui_Screen1_screen_init(void) // 创建主界面
     btn2 = lv_btn_create(panel);
     lv_obj_set_size(btn2, 215, 80);
     lv_obj_align(btn2, LV_ALIGN_OUT_RIGHT_TOP, 0, 0);
-    lv_obj_add_style(btn2, &style_rect, 0); // 将样式应用到矩形上
+    lv_obj_add_style(btn2, &style_rect, 0); // 灏嗘牱寮忓簲鐢ㄥ埌鐭╁舰涓?
     lv_obj_add_style(btn2, &focused_style, LV_STATE_FOCUSED);
     lv_obj_add_event_cb(btn2, btn2_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_t *btn2_label = lv_label_create(btn2);
@@ -374,7 +373,7 @@ void ui_Screen1_screen_init(void) // 创建主界面
     btn3 = lv_btn_create(panel);
     lv_obj_set_size(btn3, 215, 80);
     lv_obj_align(btn3, LV_ALIGN_OUT_RIGHT_TOP, 0, 0);
-    lv_obj_add_style(btn3, &style_rect, 0); // 将样式应用到矩形上
+    lv_obj_add_style(btn3, &style_rect, 0); // 灏嗘牱寮忓簲鐢ㄥ埌鐭╁舰涓?
     lv_obj_add_event_cb(btn3, btn3_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_add_style(btn3, &focused_style, LV_STATE_FOCUSED);
     lv_obj_t *btn3_label = lv_label_create(btn3);
@@ -389,7 +388,7 @@ void ui_Screen1_screen_init(void) // 创建主界面
     btn4 = lv_btn_create(panel);
     lv_obj_set_size(btn4, 215, 80);
     lv_obj_align(btn4, LV_ALIGN_OUT_RIGHT_TOP, 0, 0);
-    lv_obj_add_style(btn4, &style_rect, 0); // 将样式应用到矩形上
+    lv_obj_add_style(btn4, &style_rect, 0); // 灏嗘牱寮忓簲鐢ㄥ埌鐭╁舰涓?
     lv_obj_add_style(btn4, &focused_style, LV_STATE_FOCUSED);
     lv_obj_add_event_cb(btn4, btn4_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_t *btn4_label = lv_label_create(btn4);
@@ -404,7 +403,7 @@ void ui_Screen1_screen_init(void) // 创建主界面
     btn5 = lv_btn_create(panel);
     lv_obj_set_size(btn5, 215, 80);
     lv_obj_align(btn5, LV_ALIGN_OUT_RIGHT_TOP, 0, 0);
-    lv_obj_add_style(btn5, &style_rect, 0); // 将样式应用到矩形上
+    lv_obj_add_style(btn5, &style_rect, 0); // 灏嗘牱寮忓簲鐢ㄥ埌鐭╁舰涓?
     lv_obj_add_style(btn5, &focused_style, LV_STATE_FOCUSED);
     lv_obj_add_event_cb(btn5, btn5_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_t *btn5_label = lv_label_create(btn5);
@@ -419,7 +418,7 @@ void ui_Screen1_screen_init(void) // 创建主界面
     btn6 = lv_btn_create(panel);
     lv_obj_set_size(btn6, 215, 80);
     lv_obj_align(btn6, LV_ALIGN_OUT_RIGHT_TOP, 0, 0);
-    lv_obj_add_style(btn6, &style_rect, 0); // 将样式应用到矩形上
+    lv_obj_add_style(btn6, &style_rect, 0); // 灏嗘牱寮忓簲鐢ㄥ埌鐭╁舰涓?
     lv_obj_add_style(btn6, &focused_style, LV_STATE_FOCUSED);
     lv_obj_add_event_cb(btn6, btn6_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(btn6, btn6_event_cb, LV_EVENT_CLICKED, NULL);
@@ -435,7 +434,7 @@ void ui_Screen1_screen_init(void) // 创建主界面
     btn7 = lv_btn_create(panel);
     lv_obj_set_size(btn7, 215, 80);
     lv_obj_align(btn7, LV_ALIGN_OUT_RIGHT_TOP, 0, 0);
-    lv_obj_add_style(btn7, &style_rect, 0); // 将样式应用到矩形上
+    lv_obj_add_style(btn7, &style_rect, 0); // 灏嗘牱寮忓簲鐢ㄥ埌鐭╁舰涓?
     lv_obj_add_style(btn7, &focused_style, LV_STATE_FOCUSED);
     lv_obj_add_event_cb(btn7, btn7_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_t *btn7_label = lv_label_create(btn7);
@@ -450,7 +449,7 @@ void ui_Screen1_screen_init(void) // 创建主界面
     btn8 = lv_btn_create(panel);
     lv_obj_set_size(btn8, 215, 80);
     lv_obj_align(btn8, LV_ALIGN_OUT_RIGHT_TOP, 0, 0);
-    lv_obj_add_style(btn8, &style_rect, 0); // 将样式应用到矩形上
+    lv_obj_add_style(btn8, &style_rect, 0); // 灏嗘牱寮忓簲鐢ㄥ埌鐭╁舰涓?
     lv_obj_add_style(btn8, &focused_style, LV_STATE_FOCUSED);
     lv_obj_add_event_cb(btn8, btn8_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_t *btn8_label = lv_label_create(btn8);
@@ -465,7 +464,7 @@ void ui_Screen1_screen_init(void) // 创建主界面
     btn9 = lv_btn_create(panel);
     lv_obj_set_size(btn9, 215, 80);
     lv_obj_align(btn9, LV_ALIGN_OUT_RIGHT_TOP, 0, 0);
-    lv_obj_add_style(btn9, &style_rect, 0); // 将样式应用到矩形上
+    lv_obj_add_style(btn9, &style_rect, 0); // 灏嗘牱寮忓簲鐢ㄥ埌鐭╁舰涓?
     lv_obj_add_style(btn9, &focused_style, LV_STATE_FOCUSED);
     lv_obj_add_event_cb(btn9, btn9_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_t *btn9_label = lv_label_create(btn9);
@@ -480,7 +479,7 @@ void ui_Screen1_screen_init(void) // 创建主界面
     btn10 = lv_btn_create(panel);
     lv_obj_set_size(btn10, 215, 80);
     lv_obj_align(btn10, LV_ALIGN_OUT_RIGHT_TOP, 0, 0);
-    lv_obj_add_style(btn10, &style_rect, 0); // 将样式应用到矩形上
+    lv_obj_add_style(btn10, &style_rect, 0); // 灏嗘牱寮忓簲鐢ㄥ埌鐭╁舰涓?
     lv_obj_add_style(btn10, &focused_style, LV_STATE_FOCUSED);
     lv_obj_add_event_cb(btn10, btn10_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_t *btn10_label = lv_label_create(btn10);
@@ -493,11 +492,11 @@ void ui_Screen1_screen_init(void) // 创建主界面
     lv_obj_align(img10, LV_ALIGN_OUT_RIGHT_MID, 126, 0);      // Center the image within the button
 
     lv_style_init(&style_rect);
-    // 设置边框的颜色和粗细
-    lv_style_set_border_color(&style_rect, lv_color_hex(0xFF0000)); // 红色边框
-    lv_style_set_border_width(&style_rect, 3);                      // 5 像素粗细
-    lv_style_set_bg_color(&style_rect, lv_color_hex(0x000000));     // 白色背景
-    lv_style_set_radius(&style_rect, 20);                           // 圆角半径
+    // 璁剧疆杈规鐨勯鑹插拰绮楃粏
+    lv_style_set_border_color(&style_rect, lv_color_hex(0xFF0000)); // 绾㈣壊杈规
+    lv_style_set_border_width(&style_rect, 3);                      // 5 鍍忕礌绮楃粏
+    lv_style_set_bg_color(&style_rect, lv_color_hex(0x000000));     // 鐧借壊鑳屾櫙
+    lv_style_set_radius(&style_rect, 20);                           // 鍦嗚鍗婂緞
 
     slider = lv_slider_create(lv_scr_act());
     lv_obj_set_size(slider, 15, 90);
@@ -543,7 +542,7 @@ void ui_Screen1_screen_init(void) // 创建主界面
     lv_group_add_obj(group, btn9);
     lv_group_add_obj(group, btn10);
 
-    // 使用异步调用延迟恢复状态，确保界面完全创建
+    // 浣跨敤寮傛璋冪敤寤惰繜鎭㈠鐘舵€侊紝纭繚鐣岄潰瀹屽叏鍒涘缓
     lv_async_call(delayed_restore_state, NULL);
 }
 
@@ -554,14 +553,14 @@ void pinmap_init(void)
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
-    lv_obj_t *name_label1 = lv_label_create(lv_scr_act());         // 将文本标签添加到圆角矩形上
-    lv_label_set_text(name_label1, "#FFD700 ROW1:MCU and power#"); // 设置文本内容
+    lv_obj_t *name_label1 = lv_label_create(lv_scr_act());         // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(name_label1, "#FFD700 ROW1:MCU and power#"); // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(name_label1, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(name_label1, 10, 26);
     lv_label_set_recolor(name_label1, true);
 
-    lv_obj_t *name_label2 = lv_label_create(lv_scr_act());           // 将文本标签添加到圆角矩形上
-    lv_label_set_text(name_label2, "#00FFFF ROW2:DLA and DAPlink#"); // 设置文本内容
+    lv_obj_t *name_label2 = lv_label_create(lv_scr_act());           // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(name_label2, "#00FFFF ROW2:DLA and DAPlink#"); // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(name_label2, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(name_label2, 10, 60);
     lv_label_set_recolor(name_label2, true);
@@ -570,398 +569,397 @@ void pinmap_init(void)
     lv_obj_remove_style(rounded_rect1, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect1, 21, 65);
     lv_obj_set_pos(rounded_rect1, 6, 110);
-    lv_obj_set_style_radius(rounded_rect1, 5, LV_PART_MAIN);                        // 圆角半径20
-    lv_obj_set_style_bg_color(rounded_rect1, lv_color_hex(0x696969), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect1_label1 = lv_label_create(rounded_rect1);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect1_label1, "GD");                                  // 设置文本内容
+    lv_obj_set_style_radius(rounded_rect1, 5, LV_PART_MAIN);                        // 鍦嗚鍗婂緞20
+    lv_obj_set_style_bg_color(rounded_rect1, lv_color_hex(0x696969), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect1_label1 = lv_label_create(rounded_rect1);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect1_label1, "GD");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect1_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect1_label1, LV_ALIGN_TOP_MID, 0, 0);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect1_label2 = lv_label_create(rounded_rect1); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect1_label2, "1");                    // 设置文本内容
+    lv_obj_align(rounded_rect1_label1, LV_ALIGN_TOP_MID, 0, 0);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect1_label2 = lv_label_create(rounded_rect1); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect1_label2, "1");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect1_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect1_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect1_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 
     lv_obj_t *rounded_rect2 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect2, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect2, 21, 65);
     lv_obj_set_pos(rounded_rect2, 27, 110);
     lv_obj_set_style_radius(rounded_rect2, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(rounded_rect2, lv_color_hex(0xA52A2A), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect2_label1 = lv_label_create(rounded_rect2);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect2_label1, "IO");                                  // 设置文本内容
+    lv_obj_set_style_bg_color(rounded_rect2, lv_color_hex(0xA52A2A), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect2_label1 = lv_label_create(rounded_rect2);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect2_label1, "IO");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect2_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect2_label1, LV_ALIGN_TOP_MID, 0, 0);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect2_label2 = lv_label_create(rounded_rect2); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect2_label2, "2");                    // 设置文本内容
+    lv_obj_align(rounded_rect2_label1, LV_ALIGN_TOP_MID, 0, 0);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect2_label2 = lv_label_create(rounded_rect2); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect2_label2, "2");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect2_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect2_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect2_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 
     lv_obj_t *rounded_rect3 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect3, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect3, 21, 65);
     lv_obj_set_pos(rounded_rect3, 48, 110);
     lv_obj_set_style_radius(rounded_rect3, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(rounded_rect3, lv_color_hex(0xFF0000), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect3_label1 = lv_label_create(rounded_rect3);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect3_label1, "3V");                                  // 设置文本内容
+    lv_obj_set_style_bg_color(rounded_rect3, lv_color_hex(0xFF0000), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect3_label1 = lv_label_create(rounded_rect3);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect3_label1, "3V");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect3_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect3_label1, LV_ALIGN_TOP_MID, 0, 0);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect3_label2 = lv_label_create(rounded_rect3); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect3_label2, "3");                    // 设置文本内容
+    lv_obj_align(rounded_rect3_label1, LV_ALIGN_TOP_MID, 0, 0);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect3_label2 = lv_label_create(rounded_rect3); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect3_label2, "3");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect3_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect3_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect3_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 
     lv_obj_t *rounded_rect4 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect4, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect4, 21, 65);
     lv_obj_set_pos(rounded_rect4, 69, 110);
     lv_obj_set_style_radius(rounded_rect4, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(rounded_rect4, lv_color_hex(0xFF0000), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect4_label1 = lv_label_create(rounded_rect4);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect4_label1, "5V");                                  // 设置文本内容
+    lv_obj_set_style_bg_color(rounded_rect4, lv_color_hex(0xFF0000), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect4_label1 = lv_label_create(rounded_rect4);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect4_label1, "5V");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect4_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect4_label1, LV_ALIGN_TOP_MID, 0, 0);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect4_label2 = lv_label_create(rounded_rect4); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect4_label2, "4");                    // 设置文本内容
+    lv_obj_align(rounded_rect4_label1, LV_ALIGN_TOP_MID, 0, 0);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect4_label2 = lv_label_create(rounded_rect4); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect4_label2, "4");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect4_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect4_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect4_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 
     lv_obj_t *rounded_rect5 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect5, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect5, 21, 65);
     lv_obj_set_pos(rounded_rect5, 90, 110);
     lv_obj_set_style_radius(rounded_rect5, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(rounded_rect5, lv_color_hex(0x008000), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect5_label1 = lv_label_create(rounded_rect5);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect5_label1, "CO");                                  // 设置文本内容
+    lv_obj_set_style_bg_color(rounded_rect5, lv_color_hex(0x008000), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect5_label1 = lv_label_create(rounded_rect5);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect5_label1, "CO");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect5_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect5_label1, LV_ALIGN_TOP_MID, 0, 0);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect5_label2 = lv_label_create(rounded_rect5); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect5_label2, "5");                    // 设置文本内容
+    lv_obj_align(rounded_rect5_label1, LV_ALIGN_TOP_MID, 0, 0);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect5_label2 = lv_label_create(rounded_rect5); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect5_label2, "5");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect5_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect5_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect5_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 
     lv_obj_t *rounded_rect6 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect6, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect6, 21, 65);
     lv_obj_set_pos(rounded_rect6, 111, 110);
     lv_obj_set_style_radius(rounded_rect6, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(rounded_rect6, lv_color_hex(0x008000), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect6_label1 = lv_label_create(rounded_rect6);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect6_label1, "PW");                                  // 设置文本内容
+    lv_obj_set_style_bg_color(rounded_rect6, lv_color_hex(0x008000), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect6_label1 = lv_label_create(rounded_rect6);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect6_label1, "PW");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect6_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect6_label1, LV_ALIGN_TOP_MID, 0, 0);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect6_label2 = lv_label_create(rounded_rect6); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect6_label2, "6");                    // 设置文本内容
+    lv_obj_align(rounded_rect6_label1, LV_ALIGN_TOP_MID, 0, 0);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect6_label2 = lv_label_create(rounded_rect6); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect6_label2, "6");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect6_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect6_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect6_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 
     lv_obj_t *rounded_rect7 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect7, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect7, 21, 65);
     lv_obj_set_pos(rounded_rect7, 132, 110);
     lv_obj_set_style_radius(rounded_rect7, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(rounded_rect7, lv_color_hex(0x0000FF), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect7_label1 = lv_label_create(rounded_rect7);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect7_label1, "SL");                                  // 设置文本内容
+    lv_obj_set_style_bg_color(rounded_rect7, lv_color_hex(0x0000FF), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect7_label1 = lv_label_create(rounded_rect7);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect7_label1, "SL");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect7_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect7_label1, LV_ALIGN_TOP_MID, 0, 0);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect7_label2 = lv_label_create(rounded_rect7); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect7_label2, "7");                    // 设置文本内容
+    lv_obj_align(rounded_rect7_label1, LV_ALIGN_TOP_MID, 0, 0);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect7_label2 = lv_label_create(rounded_rect7); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect7_label2, "7");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect7_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect7_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect7_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 
     lv_obj_t *rounded_rect8 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect8, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect8, 21, 65);
     lv_obj_set_pos(rounded_rect8, 153, 110);
     lv_obj_set_style_radius(rounded_rect8, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(rounded_rect8, lv_color_hex(0x0000FF), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect8_label1 = lv_label_create(rounded_rect8);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect8_label1, "SA");                                  // 设置文本内容
+    lv_obj_set_style_bg_color(rounded_rect8, lv_color_hex(0x0000FF), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect8_label1 = lv_label_create(rounded_rect8);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect8_label1, "SA");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect8_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect8_label1, LV_ALIGN_TOP_MID, 0, 0);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect8_label2 = lv_label_create(rounded_rect8); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect8_label2, "8");                    // 设置文本内容
+    lv_obj_align(rounded_rect8_label1, LV_ALIGN_TOP_MID, 0, 0);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect8_label2 = lv_label_create(rounded_rect8); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect8_label2, "8");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect8_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect8_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect8_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 
     lv_obj_t *rounded_rect9 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect9, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect9, 21, 65);
     lv_obj_set_pos(rounded_rect9, 174, 110);
     lv_obj_set_style_radius(rounded_rect9, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(rounded_rect9, lv_color_hex(0xC71585), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect9_label1 = lv_label_create(rounded_rect9);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect9_label1, "DI");                                  // 设置文本内容
+    lv_obj_set_style_bg_color(rounded_rect9, lv_color_hex(0xC71585), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect9_label1 = lv_label_create(rounded_rect9);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect9_label1, "DI");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect9_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect9_label1, LV_ALIGN_TOP_MID, 0, 0);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect9_label2 = lv_label_create(rounded_rect9); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect9_label2, "9");                    // 设置文本内容
+    lv_obj_align(rounded_rect9_label1, LV_ALIGN_TOP_MID, 0, 0);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect9_label2 = lv_label_create(rounded_rect9); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect9_label2, "9");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect9_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect9_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect9_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 
     lv_obj_t *rounded_rect10 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect10, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect10, 21, 65);
     lv_obj_set_pos(rounded_rect10, 195, 110);
     lv_obj_set_style_radius(rounded_rect10, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(rounded_rect10, lv_color_hex(0xC71585), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect10_label1 = lv_label_create(rounded_rect10);               // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect10_label1, "CL");                                  // 设置文本内容
+    lv_obj_set_style_bg_color(rounded_rect10, lv_color_hex(0xC71585), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect10_label1 = lv_label_create(rounded_rect10);               // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect10_label1, "CL");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect10_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect10_label1, LV_ALIGN_TOP_MID, 0, 0);       // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect10_label2 = lv_label_create(rounded_rect10); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect10_label2, "10");                    // 设置文本内容
+    lv_obj_align(rounded_rect10_label1, LV_ALIGN_TOP_MID, 0, 0);       // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect10_label2 = lv_label_create(rounded_rect10); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect10_label2, "10");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect10_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect10_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect10_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 
     lv_obj_t *rounded_rect11 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect11, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect11, 21, 65);
     lv_obj_set_pos(rounded_rect11, 216, 110);
     lv_obj_set_style_radius(rounded_rect11, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(rounded_rect11, lv_color_hex(0xC71585), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect11_label1 = lv_label_create(rounded_rect11);               // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect11_label1, "RS");                                  // 设置文本内容
+    lv_obj_set_style_bg_color(rounded_rect11, lv_color_hex(0xC71585), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect11_label1 = lv_label_create(rounded_rect11);               // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect11_label1, "RS");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect11_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect11_label1, LV_ALIGN_TOP_MID, 0, 0);       // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect11_label2 = lv_label_create(rounded_rect11); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect11_label2, "11");                    // 设置文本内容
+    lv_obj_align(rounded_rect11_label1, LV_ALIGN_TOP_MID, 0, 0);       // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect11_label2 = lv_label_create(rounded_rect11); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect11_label2, "11");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect11_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect11_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect11_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 
     lv_obj_t *rounded_rect12 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect12, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect12, 21, 65);
     lv_obj_set_pos(rounded_rect12, 237, 110);
     lv_obj_set_style_radius(rounded_rect12, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(rounded_rect12, lv_color_hex(0xFF8C00), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect12_label1 = lv_label_create(rounded_rect12);               // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect12_label1, "RX");                                  // 设置文本内容
+    lv_obj_set_style_bg_color(rounded_rect12, lv_color_hex(0xFF8C00), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect12_label1 = lv_label_create(rounded_rect12);               // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect12_label1, "RX");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect12_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect12_label1, LV_ALIGN_TOP_MID, 0, 0);       // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect12_label2 = lv_label_create(rounded_rect12); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect12_label2, "12");                    // 设置文本内容
+    lv_obj_align(rounded_rect12_label1, LV_ALIGN_TOP_MID, 0, 0);       // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect12_label2 = lv_label_create(rounded_rect12); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect12_label2, "12");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect12_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect12_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect12_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 
     lv_obj_t *rounded_rect13 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect13, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect13, 21, 65);
     lv_obj_set_pos(rounded_rect13, 258, 110);
     lv_obj_set_style_radius(rounded_rect13, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(rounded_rect13, lv_color_hex(0xFF8C00), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect13_label1 = lv_label_create(rounded_rect13);               // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect13_label1, "TX");                                  // 设置文本内容
+    lv_obj_set_style_bg_color(rounded_rect13, lv_color_hex(0xFF8C00), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect13_label1 = lv_label_create(rounded_rect13);               // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect13_label1, "TX");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect13_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect13_label1, LV_ALIGN_TOP_MID, 0, 0);       // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect13_label2 = lv_label_create(rounded_rect13); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect13_label2, "13");                    // 设置文本内容
+    lv_obj_align(rounded_rect13_label1, LV_ALIGN_TOP_MID, 0, 0);       // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect13_label2 = lv_label_create(rounded_rect13); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect13_label2, "13");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect13_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect13_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect13_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 
     lv_obj_t *rounded_rect14 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect14, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect14, 21, 65);
     lv_obj_set_pos(rounded_rect14, 6, 175);
-    lv_obj_set_style_radius(rounded_rect14, 5, LV_PART_MAIN);                        // 圆角半径20
-    lv_obj_set_style_bg_color(rounded_rect14, lv_color_hex(0x696969), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect14_label1 = lv_label_create(rounded_rect14);               // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect14_label1, "GD");                                  // 设置文本内容
+    lv_obj_set_style_radius(rounded_rect14, 5, LV_PART_MAIN);                        // 鍦嗚鍗婂緞20
+    lv_obj_set_style_bg_color(rounded_rect14, lv_color_hex(0x696969), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect14_label1 = lv_label_create(rounded_rect14);               // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect14_label1, "GD");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect14_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect14_label1, LV_ALIGN_TOP_MID, 0, 0);       // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect14_label2 = lv_label_create(rounded_rect14); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect14_label2, "14");                    // 设置文本内容
+    lv_obj_align(rounded_rect14_label1, LV_ALIGN_TOP_MID, 0, 0);       // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect14_label2 = lv_label_create(rounded_rect14); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect14_label2, "14");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect14_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect14_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect14_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 
     lv_obj_t *rounded_rect15 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect15, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect15, 21, 65);
     lv_obj_set_pos(rounded_rect15, 27, 175);
     lv_obj_set_style_radius(rounded_rect15, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(rounded_rect15, lv_color_hex(0x20B2AA), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect15_label1 = lv_label_create(rounded_rect15);               // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect15_label1, "C0");                                  // 设置文本内容
+    lv_obj_set_style_bg_color(rounded_rect15, lv_color_hex(0x20B2AA), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect15_label1 = lv_label_create(rounded_rect15);               // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect15_label1, "C0");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect15_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect15_label1, LV_ALIGN_TOP_MID, 0, 0);       // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect15_label2 = lv_label_create(rounded_rect15); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect15_label2, "15");                    // 设置文本内容
+    lv_obj_align(rounded_rect15_label1, LV_ALIGN_TOP_MID, 0, 0);       // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect15_label2 = lv_label_create(rounded_rect15); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect15_label2, "15");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect15_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect15_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect15_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 
     lv_obj_t *rounded_rect16 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect16, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect16, 21, 65);
     lv_obj_set_pos(rounded_rect16, 48, 175);
     lv_obj_set_style_radius(rounded_rect16, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(rounded_rect16, lv_color_hex(0x20B2AA), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect16_label1 = lv_label_create(rounded_rect16);               // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect16_label1, "C1");                                  // 设置文本内容
+    lv_obj_set_style_bg_color(rounded_rect16, lv_color_hex(0x20B2AA), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect16_label1 = lv_label_create(rounded_rect16);               // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect16_label1, "C1");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect16_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect16_label1, LV_ALIGN_TOP_MID, 0, 0);       // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect16_label2 = lv_label_create(rounded_rect16); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect16_label2, "16");                    // 设置文本内容
+    lv_obj_align(rounded_rect16_label1, LV_ALIGN_TOP_MID, 0, 0);       // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect16_label2 = lv_label_create(rounded_rect16); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect16_label2, "16");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect16_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect16_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect16_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 
     lv_obj_t *rounded_rect17 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect17, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect17, 21, 65);
     lv_obj_set_pos(rounded_rect17, 69, 175);
     lv_obj_set_style_radius(rounded_rect17, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(rounded_rect17, lv_color_hex(0x20B2AA), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect17_label1 = lv_label_create(rounded_rect17);               // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect17_label1, "C2");                                  // 设置文本内容
+    lv_obj_set_style_bg_color(rounded_rect17, lv_color_hex(0x20B2AA), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect17_label1 = lv_label_create(rounded_rect17);               // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect17_label1, "C2");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect17_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect17_label1, LV_ALIGN_TOP_MID, 0, 0);       // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect17_label2 = lv_label_create(rounded_rect17); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect17_label2, "17");                    // 设置文本内容
+    lv_obj_align(rounded_rect17_label1, LV_ALIGN_TOP_MID, 0, 0);       // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect17_label2 = lv_label_create(rounded_rect17); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect17_label2, "17");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect17_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect17_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect17_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 
     lv_obj_t *rounded_rect18 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect18, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect18, 21, 65);
     lv_obj_set_pos(rounded_rect18, 90, 175);
     lv_obj_set_style_radius(rounded_rect18, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(rounded_rect18, lv_color_hex(0x20B2AA), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect18_label1 = lv_label_create(rounded_rect18);               // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect18_label1, "C3");                                  // 设置文本内容
+    lv_obj_set_style_bg_color(rounded_rect18, lv_color_hex(0x20B2AA), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect18_label1 = lv_label_create(rounded_rect18);               // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect18_label1, "C3");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect18_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect18_label1, LV_ALIGN_TOP_MID, 0, 0);       // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect18_label2 = lv_label_create(rounded_rect18); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect18_label2, "18");                    // 设置文本内容
+    lv_obj_align(rounded_rect18_label1, LV_ALIGN_TOP_MID, 0, 0);       // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect18_label2 = lv_label_create(rounded_rect18); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect18_label2, "18");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect18_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect18_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect18_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 
     lv_obj_t *rounded_rect19 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect19, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect19, 21, 65);
     lv_obj_set_pos(rounded_rect19, 111, 175);
     lv_obj_set_style_radius(rounded_rect19, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(rounded_rect19, lv_color_hex(0x20B2AA), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect19_label1 = lv_label_create(rounded_rect19);               // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect19_label1, "C4");                                  // 设置文本内容
+    lv_obj_set_style_bg_color(rounded_rect19, lv_color_hex(0x20B2AA), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect19_label1 = lv_label_create(rounded_rect19);               // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect19_label1, "C4");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect19_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect19_label1, LV_ALIGN_TOP_MID, 0, 0);       // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect19_label2 = lv_label_create(rounded_rect19); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect19_label2, "19");                    // 设置文本内容
+    lv_obj_align(rounded_rect19_label1, LV_ALIGN_TOP_MID, 0, 0);       // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect19_label2 = lv_label_create(rounded_rect19); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect19_label2, "19");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect19_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect19_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect19_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 
     lv_obj_t *rounded_rect20 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect20, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect20, 21, 65);
     lv_obj_set_pos(rounded_rect20, 132, 175);
     lv_obj_set_style_radius(rounded_rect20, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(rounded_rect20, lv_color_hex(0x20B2AA), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect20_label1 = lv_label_create(rounded_rect20);               // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect20_label1, "C5");                                  // 设置文本内容
+    lv_obj_set_style_bg_color(rounded_rect20, lv_color_hex(0x20B2AA), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect20_label1 = lv_label_create(rounded_rect20);               // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect20_label1, "C5");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect20_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect20_label1, LV_ALIGN_TOP_MID, 0, 0);       // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect20_label2 = lv_label_create(rounded_rect20); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect20_label2, "20");                    // 设置文本内容
+    lv_obj_align(rounded_rect20_label1, LV_ALIGN_TOP_MID, 0, 0);       // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect20_label2 = lv_label_create(rounded_rect20); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect20_label2, "20");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect20_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect20_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect20_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 
     lv_obj_t *rounded_rect21 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect21, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect21, 21, 65);
     lv_obj_set_pos(rounded_rect21, 153, 175);
     lv_obj_set_style_radius(rounded_rect21, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(rounded_rect21, lv_color_hex(0x20B2AA), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect21_label1 = lv_label_create(rounded_rect21);               // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect21_label1, "C6");                                  // 设置文本内容
+    lv_obj_set_style_bg_color(rounded_rect21, lv_color_hex(0x20B2AA), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect21_label1 = lv_label_create(rounded_rect21);               // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect21_label1, "C6");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect21_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect21_label1, LV_ALIGN_TOP_MID, 0, 0);       // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect21_label2 = lv_label_create(rounded_rect21); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect21_label2, "21");                    // 设置文本内容
+    lv_obj_align(rounded_rect21_label1, LV_ALIGN_TOP_MID, 0, 0);       // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect21_label2 = lv_label_create(rounded_rect21); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect21_label2, "21");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect21_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect21_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect21_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 
     lv_obj_t *rounded_rect22 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect22, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect22, 21, 65);
     lv_obj_set_pos(rounded_rect22, 174, 175);
     lv_obj_set_style_radius(rounded_rect22, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(rounded_rect22, lv_color_hex(0x20B2AA), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect22_label1 = lv_label_create(rounded_rect22);               // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect22_label1, "C7");                                  // 设置文本内容
+    lv_obj_set_style_bg_color(rounded_rect22, lv_color_hex(0x20B2AA), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect22_label1 = lv_label_create(rounded_rect22);               // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect22_label1, "C7");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect22_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect22_label1, LV_ALIGN_TOP_MID, 0, 0);       // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect22_label2 = lv_label_create(rounded_rect22); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect22_label2, "22");                    // 设置文本内容
+    lv_obj_align(rounded_rect22_label1, LV_ALIGN_TOP_MID, 0, 0);       // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect22_label2 = lv_label_create(rounded_rect22); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect22_label2, "22");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect22_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect22_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect22_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 
     lv_obj_t *rounded_rect23 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect23, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect23, 21, 65);
     lv_obj_set_pos(rounded_rect23, 195, 175);
     lv_obj_set_style_radius(rounded_rect23, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(rounded_rect23, lv_color_hex(0x006400), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect23_label1 = lv_label_create(rounded_rect23);               // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect23_label1, "DI");                                  // 设置文本内容
+    lv_obj_set_style_bg_color(rounded_rect23, lv_color_hex(0x006400), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect23_label1 = lv_label_create(rounded_rect23);               // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect23_label1, "DI");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect23_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect23_label1, LV_ALIGN_TOP_MID, 0, 0);       // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect23_label2 = lv_label_create(rounded_rect23); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect23_label2, "23");                    // 设置文本内容
+    lv_obj_align(rounded_rect23_label1, LV_ALIGN_TOP_MID, 0, 0);       // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect23_label2 = lv_label_create(rounded_rect23); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect23_label2, "23");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect23_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect23_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect23_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 
     lv_obj_t *rounded_rect24 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect24, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect24, 21, 65);
     lv_obj_set_pos(rounded_rect24, 216, 175);
     lv_obj_set_style_radius(rounded_rect24, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(rounded_rect24, lv_color_hex(0x006400), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect24_label1 = lv_label_create(rounded_rect24);               // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect24_label1, "CL");                                  // 设置文本内容
+    lv_obj_set_style_bg_color(rounded_rect24, lv_color_hex(0x006400), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect24_label1 = lv_label_create(rounded_rect24);               // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect24_label1, "CL");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect24_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect24_label1, LV_ALIGN_TOP_MID, 0, 0);       // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect24_label2 = lv_label_create(rounded_rect24); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect24_label2, "24");                    // 设置文本内容
+    lv_obj_align(rounded_rect24_label1, LV_ALIGN_TOP_MID, 0, 0);       // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect24_label2 = lv_label_create(rounded_rect24); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect24_label2, "24");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect24_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect24_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect24_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 
     lv_obj_t *rounded_rect25 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect25, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect25, 21, 65);
     lv_obj_set_pos(rounded_rect25, 257, 175);
     lv_obj_set_style_radius(rounded_rect25, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(rounded_rect25, lv_color_hex(0xFF1493), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect25_label1 = lv_label_create(rounded_rect25);               // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect25_label1, "RX");                                  // 设置文本内容
+    lv_obj_set_style_bg_color(rounded_rect25, lv_color_hex(0xFF1493), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect25_label1 = lv_label_create(rounded_rect25);               // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect25_label1, "RX");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect25_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect25_label1, LV_ALIGN_TOP_MID, 0, 0);       // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect25_label2 = lv_label_create(rounded_rect25); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect25_label2, "25");                    // 设置文本内容
+    lv_obj_align(rounded_rect25_label1, LV_ALIGN_TOP_MID, 0, 0);       // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect25_label2 = lv_label_create(rounded_rect25); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect25_label2, "25");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect25_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect25_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect25_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 
     lv_obj_t *rounded_rect26 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect26, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect26, 21, 65);
     lv_obj_set_pos(rounded_rect26, 258, 175);
     lv_obj_set_style_radius(rounded_rect26, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(rounded_rect26, lv_color_hex(0xFF1493), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect26_label1 = lv_label_create(rounded_rect26);               // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect26_label1, "TX");                                  // 设置文本内容
+    lv_obj_set_style_bg_color(rounded_rect26, lv_color_hex(0xFF1493), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect26_label1 = lv_label_create(rounded_rect26);               // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect26_label1, "TX");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect26_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect26_label1, LV_ALIGN_TOP_MID, 0, 0);       // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect26_label2 = lv_label_create(rounded_rect26); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect26_label2, "26");                    // 设置文本内容
+    lv_obj_align(rounded_rect26_label1, LV_ALIGN_TOP_MID, 0, 0);       // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect26_label2 = lv_label_create(rounded_rect26); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect26_label2, "26");                    // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect26_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect26_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect26_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
 }
 
 void power_init(void)
 {
     lv_obj_clean(lv_scr_act());
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
-    lv_obj_add_event_cb(lv_scr_act(), longpress_event_handler_back, LV_EVENT_LONG_PRESSED, NULL);
 
     ina266_flag = 1;
     digitalWrite(1, LOW);
@@ -988,19 +986,19 @@ void power_init(void)
     lv_obj_t *V = lv_label_create(lv_scr_act());
     lv_obj_set_style_text_font(V, &lv_font_montserrat_28, 0);
     lv_obj_set_pos(V, 106, 10);
-    lv_label_set_text(V, "#FF0000 V#"); // 设置文本内容
+    lv_label_set_text(V, "#FF0000 V#"); // 璁剧疆鏂囨湰鍐呭
     lv_label_set_recolor(V, true);
 
     lv_obj_t *A = lv_label_create(lv_scr_act());
     lv_obj_set_style_text_font(A, &lv_font_montserrat_28, 0);
     lv_obj_set_pos(A, 106, 35);
-    lv_label_set_text(A, "#00FF7F A#"); // 设置文本内容
+    lv_label_set_text(A, "#00FF7F A#"); // 璁剧疆鏂囨湰鍐呭
     lv_label_set_recolor(A, true);
 
     lv_obj_t *W = lv_label_create(lv_scr_act());
     lv_obj_set_style_text_font(W, &lv_font_montserrat_28, 0);
     lv_obj_set_pos(W, 101, 60);
-    lv_label_set_text(W, "#00FFFF W#"); // 设置文本内容
+    lv_label_set_text(W, "#00FFFF W#"); // 璁剧疆鏂囨湰鍐呭
     lv_label_set_recolor(W, true);
 
     volt_chart = lv_chart_create(lv_scr_act());
@@ -1033,7 +1031,7 @@ void power_init(void)
     adddata_timer2 = lv_timer_create(add_data2, 100, ser2);
     lv_chart_refresh(cur_chart);
 
-    // 设置聚焦状态的边框
+    // 璁剧疆鑱氱劍鐘舵€佺殑杈规
     static lv_style_t focused_style;
     lv_style_init(&focused_style);
     lv_style_set_border_color(&focused_style, lv_color_hex(0xFFD700));
@@ -1048,7 +1046,7 @@ void power_init(void)
     lv_obj_t *poweron = lv_btn_create(lv_scr_act());
     lv_obj_set_size(poweron, 41, 83);
     lv_obj_set_pos(poweron, 229, 10);
-    lv_obj_add_style(poweron, &powerbtn_style, 0); // 将样式应用到矩形上
+    lv_obj_add_style(poweron, &powerbtn_style, 0); // 灏嗘牱寮忓簲鐢ㄥ埌鐭╁舰涓?
     lv_obj_add_style(poweron, &focused_style, LV_STATE_FOCUSED);
     lv_obj_add_event_cb(poweron, poweronbtn_event_cb, LV_EVENT_CLICKED, NULL);
     poweron_label = lv_label_create(poweron);
@@ -1060,7 +1058,7 @@ void power_init(void)
     lv_obj_t *VUP = lv_btn_create(lv_scr_act());
     lv_obj_set_size(VUP, 40, 40);
     lv_obj_set_pos(VUP, 183, 10);
-    lv_obj_add_style(VUP, &powerbtn_style, 0); // 将样式应用到矩形上
+    lv_obj_add_style(VUP, &powerbtn_style, 0); // 灏嗘牱寮忓簲鐢ㄥ埌鐭╁舰涓?
     lv_obj_add_style(VUP, &focused_style, LV_STATE_FOCUSED);
     lv_obj_add_event_cb(VUP, VUPbtn_event_cb, LV_EVENT_CLICKED, NULL);
     // lv_obj_add_style(poweron, &focused_style, LV_STATE_FOCUSED);
@@ -1074,7 +1072,7 @@ void power_init(void)
     lv_obj_t *VDOWN = lv_btn_create(lv_scr_act());
     lv_obj_set_size(VDOWN, 40, 40);
     lv_obj_set_pos(VDOWN, 183, 51);
-    lv_obj_add_style(VDOWN, &powerbtn_style, 0); // 将样式应用到矩形上
+    lv_obj_add_style(VDOWN, &powerbtn_style, 0); // 灏嗘牱寮忓簲鐢ㄥ埌鐭╁舰涓?
     lv_obj_add_style(VDOWN, &focused_style, LV_STATE_FOCUSED);
     lv_obj_add_event_cb(VDOWN, VDOWNbtn_event_cb, LV_EVENT_CLICKED, NULL);
     // lv_obj_add_style(poweron, &focused_style, LV_STATE_FOCUSED);
@@ -1088,7 +1086,7 @@ void power_init(void)
     lv_obj_t *V11 = lv_btn_create(lv_scr_act());
     lv_obj_set_size(V11, 42, 26);
     lv_obj_set_pos(V11, 135, 10);
-    lv_obj_add_style(V11, &powerbtn_style, 0); // 将样式应用到矩形上
+    lv_obj_add_style(V11, &powerbtn_style, 0); // 灏嗘牱寮忓簲鐢ㄥ埌鐭╁舰涓?
     lv_obj_add_style(V11, &focused_style, LV_STATE_FOCUSED);
     lv_obj_add_event_cb(V11, V11btn_event_cb, LV_EVENT_CLICKED, NULL);
     // lv_obj_add_style(poweron, &focused_style, LV_STATE_FOCUSED);
@@ -1102,7 +1100,7 @@ void power_init(void)
     lv_obj_t *V5 = lv_btn_create(lv_scr_act());
     lv_obj_set_size(V5, 42, 26);
     lv_obj_set_pos(V5, 135, 37);
-    lv_obj_add_style(V5, &powerbtn_style, 0); // 将样式应用到矩形上
+    lv_obj_add_style(V5, &powerbtn_style, 0); // 灏嗘牱寮忓簲鐢ㄥ埌鐭╁舰涓?
     lv_obj_add_style(V5, &focused_style, LV_STATE_FOCUSED);
     lv_obj_add_event_cb(V5, V5btn_event_cb, LV_EVENT_CLICKED, NULL);
     // lv_obj_add_style(poweron, &focused_style, LV_STATE_FOCUSED);
@@ -1116,7 +1114,7 @@ void power_init(void)
     lv_obj_t *V3 = lv_btn_create(lv_scr_act());
     lv_obj_set_size(V3, 42, 26);
     lv_obj_set_pos(V3, 135, 64);
-    lv_obj_add_style(V3, &powerbtn_style, 0); // 将样式应用到矩形上
+    lv_obj_add_style(V3, &powerbtn_style, 0); // 灏嗘牱寮忓簲鐢ㄥ埌鐭╁舰涓?
     lv_obj_add_style(V3, &focused_style, LV_STATE_FOCUSED);
     lv_obj_add_event_cb(V3, V3btn_event_cb, LV_EVENT_CLICKED, NULL);
     // lv_obj_add_style(poweron, &focused_style, LV_STATE_FOCUSED);
@@ -1140,36 +1138,36 @@ void power_init(void)
     lv_obj_remove_style(rounded_rect1, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect1, 50, 35);
     lv_obj_set_pos(rounded_rect1, 6, 205);
-    lv_obj_set_style_radius(rounded_rect1, 5, LV_PART_MAIN);                        // 圆角半径20
-    lv_obj_set_style_bg_color(rounded_rect1, lv_color_hex(0x696969), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect1_label1 = lv_label_create(rounded_rect1);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect1_label1, "1");                                   // 设置文本内容
+    lv_obj_set_style_radius(rounded_rect1, 5, LV_PART_MAIN);                        // 鍦嗚鍗婂緞20
+    lv_obj_set_style_bg_color(rounded_rect1, lv_color_hex(0x696969), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect1_label1 = lv_label_create(rounded_rect1);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect1_label1, "1");                                   // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect1_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect1_label1, LV_ALIGN_TOP_MID, 0, 2);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect1_label2 = lv_label_create(rounded_rect1); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect1_label2, "GND");                  // 设置文本内容
+    lv_obj_align(rounded_rect1_label1, LV_ALIGN_TOP_MID, 0, 2);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect1_label2 = lv_label_create(rounded_rect1); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect1_label2, "GND");                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect1_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect1_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect1_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
     lv_obj_t *rounded_rect2 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect2, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect2, 50, 35);
     lv_obj_set_pos(rounded_rect2, 56, 205);
-    lv_obj_set_style_radius(rounded_rect2, 5, LV_PART_MAIN);                        // 圆角半径20
-    lv_obj_set_style_bg_color(rounded_rect2, lv_color_hex(0x8B0000), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect2_label1 = lv_label_create(rounded_rect2);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect2_label1, "2");                                   // 设置文本内容
+    lv_obj_set_style_radius(rounded_rect2, 5, LV_PART_MAIN);                        // 鍦嗚鍗婂緞20
+    lv_obj_set_style_bg_color(rounded_rect2, lv_color_hex(0x8B0000), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect2_label1 = lv_label_create(rounded_rect2);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect2_label1, "2");                                   // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect2_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect2_label1, LV_ALIGN_TOP_MID, 0, 2);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect2_label2 = lv_label_create(rounded_rect2); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect2_label2, "OUT");                  // 设置文本内容
+    lv_obj_align(rounded_rect2_label1, LV_ALIGN_TOP_MID, 0, 2);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect2_label2 = lv_label_create(rounded_rect2); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect2_label2, "OUT");                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect2_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect2_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect2_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
-    lv_obj_t *volt_label1 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(volt_label1, "#FFD700 ROW1#");       // 设置文本内容
+    lv_obj_t *volt_label1 = lv_label_create(lv_scr_act()); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(volt_label1, "#FFD700 ROW1#");       // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(volt_label1, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(volt_label1, 180, 210);
     lv_label_set_recolor(volt_label1, true);
@@ -1181,7 +1179,7 @@ void pwm_init(void)
     lv_obj_clean(lv_scr_act());
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
-    lv_obj_add_event_cb(lv_scr_act(), longpress_event_handler_back, LV_EVENT_LONG_PRESSED, NULL);
+
 
     lv_obj_t *pwm = lv_img_create(lv_scr_act());
     lv_img_set_src(pwm, &pwmint_png);                       // Replace with your image variable or path
@@ -1192,74 +1190,74 @@ void pwm_init(void)
     lv_obj_remove_style(rounded_rect1, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect1, 50, 35);
     lv_obj_set_pos(rounded_rect1, 6, 205);
-    lv_obj_set_style_radius(rounded_rect1, 5, LV_PART_MAIN);                        // 圆角半径20
-    lv_obj_set_style_bg_color(rounded_rect1, lv_color_hex(0x696969), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect1_label1 = lv_label_create(rounded_rect1);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect1_label1, "1");                                   // 设置文本内容
+    lv_obj_set_style_radius(rounded_rect1, 5, LV_PART_MAIN);                        // 鍦嗚鍗婂緞20
+    lv_obj_set_style_bg_color(rounded_rect1, lv_color_hex(0x696969), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect1_label1 = lv_label_create(rounded_rect1);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect1_label1, "1");                                   // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect1_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect1_label1, LV_ALIGN_TOP_MID, 0, 2);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect1_label2 = lv_label_create(rounded_rect1); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect1_label2, "GND");                  // 设置文本内容
+    lv_obj_align(rounded_rect1_label1, LV_ALIGN_TOP_MID, 0, 2);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect1_label2 = lv_label_create(rounded_rect1); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect1_label2, "GND");                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect1_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect1_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect1_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
     lv_obj_t *rounded_rect2 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect2, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect2, 50, 35);
     lv_obj_set_pos(rounded_rect2, 56, 205);
-    lv_obj_set_style_radius(rounded_rect2, 5, LV_PART_MAIN);                        // 圆角半径20
-    lv_obj_set_style_bg_color(rounded_rect2, lv_color_hex(0x8B0000), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect2_label1 = lv_label_create(rounded_rect2);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect2_label1, "6");                                   // 设置文本内容
+    lv_obj_set_style_radius(rounded_rect2, 5, LV_PART_MAIN);                        // 鍦嗚鍗婂緞20
+    lv_obj_set_style_bg_color(rounded_rect2, lv_color_hex(0x8B0000), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect2_label1 = lv_label_create(rounded_rect2);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect2_label1, "6");                                   // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect2_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect2_label1, LV_ALIGN_TOP_MID, 0, 2);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect2_label2 = lv_label_create(rounded_rect2); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect2_label2, "PWM");                  // 设置文本内容
+    lv_obj_align(rounded_rect2_label1, LV_ALIGN_TOP_MID, 0, 2);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect2_label2 = lv_label_create(rounded_rect2); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect2_label2, "PWM");                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect2_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect2_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect2_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
-    lv_obj_t *volt_label1 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(volt_label1, "#FFD700 ROW1#");       // 设置文本内容
+    lv_obj_t *volt_label1 = lv_label_create(lv_scr_act()); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(volt_label1, "#FFD700 ROW1#");       // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(volt_label1, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(volt_label1, 180, 210);
     lv_label_set_recolor(volt_label1, true);
 
-    fre = lv_textarea_create(lv_scr_act()); /* 创建文本框 */
+    fre = lv_textarea_create(lv_scr_act()); /* 鍒涘缓鏂囨湰妗?*/
     lv_textarea_set_placeholder_text(fre, "0-100K");
-    lv_obj_set_style_text_font(fre, &lv_font_montserrat_20, LV_PART_MAIN); /* 设置字体 */
-    lv_textarea_set_one_line(fre, true);                                   /* 设置单行模式 */
+    lv_obj_set_style_text_font(fre, &lv_font_montserrat_20, LV_PART_MAIN); /* 璁剧疆瀛椾綋 */
+    lv_textarea_set_one_line(fre, true);                                   /* 璁剧疆鍗曡妯″紡 */
     lv_obj_set_size(fre, 100, 45);
     lv_obj_set_pos(fre, 72, 10);
 
-    duty = lv_textarea_create(lv_scr_act()); /* 创建文本框 */
+    duty = lv_textarea_create(lv_scr_act()); /* 鍒涘缓鏂囨湰妗?*/
     lv_textarea_set_placeholder_text(duty, "0-100");
-    lv_obj_set_style_text_font(duty, &lv_font_montserrat_20, LV_PART_MAIN); /* 设置字体 */
-    lv_textarea_set_one_line(duty, true);                                   /* 设置单行模式 */
+    lv_obj_set_style_text_font(duty, &lv_font_montserrat_20, LV_PART_MAIN); /* 璁剧疆瀛椾綋 */
+    lv_textarea_set_one_line(duty, true);                                   /* 璁剧疆鍗曡妯″紡 */
     lv_obj_set_size(duty, 100, 45);
     lv_obj_set_pos(duty, 72, 60);
 
-    lv_obj_t *fre_label1 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(fre_label1, "#FFD700 FRE#");        // 设置文本内容
+    lv_obj_t *fre_label1 = lv_label_create(lv_scr_act()); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(fre_label1, "#FFD700 FRE#");        // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(fre_label1, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(fre_label1, 10, 20);
     lv_label_set_recolor(fre_label1, true);
 
-    lv_obj_t *duty_label1 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(duty_label1, "#87CEFA DUTY#");       // 设置文本内容
+    lv_obj_t *duty_label1 = lv_label_create(lv_scr_act()); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(duty_label1, "#87CEFA DUTY#");       // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(duty_label1, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(duty_label1, 10, 70);
     lv_label_set_recolor(duty_label1, true);
 
-    lv_obj_t *fre_label2 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(fre_label2, "#FFD700 Hz#");         // 设置文本内容
+    lv_obj_t *fre_label2 = lv_label_create(lv_scr_act()); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(fre_label2, "#FFD700 Hz#");         // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(fre_label2, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(fre_label2, 180, 20);
     lv_label_set_recolor(fre_label2, true);
 
-    lv_obj_t *duty_label2 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(duty_label2, "#87CEFA %#");          // 设置文本内容
+    lv_obj_t *duty_label2 = lv_label_create(lv_scr_act()); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(duty_label2, "#87CEFA %#");          // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(duty_label2, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(duty_label2, 180, 65);
     lv_label_set_recolor(duty_label2, true);
@@ -1275,8 +1273,8 @@ void pwm_init(void)
 
     lv_obj_add_event_cb(fre, fretext_event_handler, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(duty, dutytext_event_handler, LV_EVENT_CLICKED, NULL);
-    lv_obj_add_event_cb(fre_keyboard, clear_keyboard_event_handler, LV_EVENT_VALUE_CHANGED, NULL);  /* 设置键盘事件回调 */
-    lv_obj_add_event_cb(duty_keyboard, clear_keyboard_event_handler, LV_EVENT_VALUE_CHANGED, NULL); /* 设置键盘事件回调 */
+    lv_obj_add_event_cb(fre_keyboard, clear_keyboard_event_handler, LV_EVENT_VALUE_CHANGED, NULL);  /* 璁剧疆閿洏浜嬩欢鍥炶皟 */
+    lv_obj_add_event_cb(duty_keyboard, clear_keyboard_event_handler, LV_EVENT_VALUE_CHANGED, NULL); /* 璁剧疆閿洏浜嬩欢鍥炶皟 */
 
     static lv_style_t pwm_style;
     lv_style_init(&pwm_style);
@@ -1285,7 +1283,7 @@ void pwm_init(void)
     lv_style_set_border_width(&pwm_style, 2);
 
     pwm_btn = lv_btn_create(lv_scr_act());
-    lv_obj_add_style(pwm_btn, &pwm_style, 0); // 将样式应用到矩形上
+    lv_obj_add_style(pwm_btn, &pwm_style, 0); // 灏嗘牱寮忓簲鐢ㄥ埌鐭╁舰涓?
     lv_obj_set_size(pwm_btn, 69, 50);
     lv_obj_set_pos(pwm_btn, 210, 30);
     lv_obj_add_event_cb(pwm_btn, pwm_btn_event_cb, LV_EVENT_CLICKED, NULL);
@@ -1302,70 +1300,70 @@ void uarthelper_init(void)
     lv_obj_clean(lv_scr_act());
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
-    lv_obj_add_event_cb(lv_scr_act(), longpress_event_handler_back, LV_EVENT_LONG_PRESSED, NULL);
+
 
     lv_obj_t *rounded_rect1 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect1, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect1, 50, 35);
     lv_obj_set_pos(rounded_rect1, 6, 205);
-    lv_obj_set_style_radius(rounded_rect1, 5, LV_PART_MAIN);                        // 圆角半径20
-    lv_obj_set_style_bg_color(rounded_rect1, lv_color_hex(0x696969), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect1_label1 = lv_label_create(rounded_rect1);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect1_label1, "1");                                   // 设置文本内容
+    lv_obj_set_style_radius(rounded_rect1, 5, LV_PART_MAIN);                        // 鍦嗚鍗婂緞20
+    lv_obj_set_style_bg_color(rounded_rect1, lv_color_hex(0x696969), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect1_label1 = lv_label_create(rounded_rect1);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect1_label1, "1");                                   // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect1_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect1_label1, LV_ALIGN_TOP_MID, 0, 2);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect1_label2 = lv_label_create(rounded_rect1); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect1_label2, "GND");                  // 设置文本内容
+    lv_obj_align(rounded_rect1_label1, LV_ALIGN_TOP_MID, 0, 2);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect1_label2 = lv_label_create(rounded_rect1); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect1_label2, "GND");                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect1_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect1_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect1_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
     lv_obj_t *rounded_rect2 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect2, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect2, 50, 35);
     lv_obj_set_pos(rounded_rect2, 56, 205);
-    lv_obj_set_style_radius(rounded_rect2, 5, LV_PART_MAIN);                        // 圆角半径20
-    lv_obj_set_style_bg_color(rounded_rect2, lv_color_hex(0xFFA500), LV_PART_MAIN); // 背景色为橙色
-    lv_obj_t *rounded_rect2_label1 = lv_label_create(rounded_rect2);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect2_label1, "12");                                  // 设置文本内容
+    lv_obj_set_style_radius(rounded_rect2, 5, LV_PART_MAIN);                        // 鍦嗚鍗婂緞20
+    lv_obj_set_style_bg_color(rounded_rect2, lv_color_hex(0xFFA500), LV_PART_MAIN); // 鑳屾櫙鑹蹭负姗欒壊
+    lv_obj_t *rounded_rect2_label1 = lv_label_create(rounded_rect2);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect2_label1, "12");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect2_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect2_label1, LV_ALIGN_TOP_MID, 0, 2);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect2_label2 = lv_label_create(rounded_rect2); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect2_label2, "RX");                   // 设置文本内容
+    lv_obj_align(rounded_rect2_label1, LV_ALIGN_TOP_MID, 0, 2);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect2_label2 = lv_label_create(rounded_rect2); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect2_label2, "RX");                   // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect2_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect2_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect2_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
     lv_obj_t *rounded_rect3 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect3, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect3, 50, 35);
     lv_obj_set_pos(rounded_rect3, 106, 205);
-    lv_obj_set_style_radius(rounded_rect3, 5, LV_PART_MAIN);                        // 圆角半径20
-    lv_obj_set_style_bg_color(rounded_rect3, lv_color_hex(0xFFA500), LV_PART_MAIN); // 背景色为橙色
-    lv_obj_t *rounded_rect3_label1 = lv_label_create(rounded_rect3);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect3_label1, "13");                                  // 设置文本内容
+    lv_obj_set_style_radius(rounded_rect3, 5, LV_PART_MAIN);                        // 鍦嗚鍗婂緞20
+    lv_obj_set_style_bg_color(rounded_rect3, lv_color_hex(0xFFA500), LV_PART_MAIN); // 鑳屾櫙鑹蹭负姗欒壊
+    lv_obj_t *rounded_rect3_label1 = lv_label_create(rounded_rect3);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect3_label1, "13");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect3_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect3_label1, LV_ALIGN_TOP_MID, 0, 2);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect3_label2 = lv_label_create(rounded_rect3); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect3_label2, "TX");                   // 设置文本内容
+    lv_obj_align(rounded_rect3_label1, LV_ALIGN_TOP_MID, 0, 2);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect3_label2 = lv_label_create(rounded_rect3); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect3_label2, "TX");                   // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect3_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect3_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect3_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
-    lv_obj_t *volt_label1 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(volt_label1, "#FFD700 ROW1#");       // 设置文本内容
+    lv_obj_t *volt_label1 = lv_label_create(lv_scr_act()); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(volt_label1, "#FFD700 ROW1#");       // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(volt_label1, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(volt_label1, 180, 210);
     lv_label_set_recolor(volt_label1, true);
 
-    lv_obj_t *volt_label2 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(volt_label2, "#00FF7F UART#");       // 设置文本内容
+    lv_obj_t *volt_label2 = lv_label_create(lv_scr_act()); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(volt_label2, "#00FF7F UART#");       // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(volt_label2, &lv_font_montserrat_28, 0);
     lv_obj_set_pos(volt_label2, 15, 32);
     lv_label_set_recolor(volt_label2, true);
 
-    lv_obj_t *volt_label3 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(volt_label3, "#00FFFF baudRate#");   // 设置文本内容
+    lv_obj_t *volt_label3 = lv_label_create(lv_scr_act()); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(volt_label3, "#00FFFF baudRate#");   // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(volt_label3, &lv_font_montserrat_18, 0);
     lv_obj_set_pos(volt_label3, 170, 5);
     lv_label_set_recolor(volt_label3, true);
@@ -1401,7 +1399,7 @@ void uarthelper_init(void)
     lv_style_set_border_width(&uart_style, 2);
 
     uart_btn = lv_btn_create(lv_scr_act());
-    lv_obj_add_style(uart_btn, &uart_style, 0); // 将样式应用到矩形上
+    lv_obj_add_style(uart_btn, &uart_style, 0); // 灏嗘牱寮忓簲鐢ㄥ埌鐭╁舰涓?
     lv_obj_set_size(uart_btn, 65, 52);
     lv_obj_set_pos(uart_btn, 100, 20);
     lv_obj_add_event_cb(uart_btn, uart_btn_event_cb, LV_EVENT_CLICKED, NULL);
@@ -1418,64 +1416,64 @@ void i2c_init(void)
     lv_obj_clean(lv_scr_act());
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
-    lv_obj_add_event_cb(lv_scr_act(), longpress_event_handler_back, LV_EVENT_LONG_PRESSED, NULL);
+
 
     lv_obj_t *rounded_rect1 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect1, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect1, 50, 35);
     lv_obj_set_pos(rounded_rect1, 6, 205);
-    lv_obj_set_style_radius(rounded_rect1, 5, LV_PART_MAIN);                        // 圆角半径20
-    lv_obj_set_style_bg_color(rounded_rect1, lv_color_hex(0x696969), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect1_label1 = lv_label_create(rounded_rect1);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect1_label1, "1");                                   // 设置文本内容
+    lv_obj_set_style_radius(rounded_rect1, 5, LV_PART_MAIN);                        // 鍦嗚鍗婂緞20
+    lv_obj_set_style_bg_color(rounded_rect1, lv_color_hex(0x696969), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect1_label1 = lv_label_create(rounded_rect1);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect1_label1, "1");                                   // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect1_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect1_label1, LV_ALIGN_TOP_MID, 0, 2);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect1_label2 = lv_label_create(rounded_rect1); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect1_label2, "GND");                  // 设置文本内容
+    lv_obj_align(rounded_rect1_label1, LV_ALIGN_TOP_MID, 0, 2);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect1_label2 = lv_label_create(rounded_rect1); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect1_label2, "GND");                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect1_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect1_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect1_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
     lv_obj_t *rounded_rect2 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect2, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect2, 50, 35);
     lv_obj_set_pos(rounded_rect2, 56, 205);
-    lv_obj_set_style_radius(rounded_rect2, 5, LV_PART_MAIN);                        // 圆角半径20
-    lv_obj_set_style_bg_color(rounded_rect2, lv_color_hex(0x1E90FF), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect2_label1 = lv_label_create(rounded_rect2);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect2_label1, "7");                                   // 设置文本内容
+    lv_obj_set_style_radius(rounded_rect2, 5, LV_PART_MAIN);                        // 鍦嗚鍗婂緞20
+    lv_obj_set_style_bg_color(rounded_rect2, lv_color_hex(0x1E90FF), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect2_label1 = lv_label_create(rounded_rect2);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect2_label1, "7");                                   // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect2_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect2_label1, LV_ALIGN_TOP_MID, 0, 2);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect2_label2 = lv_label_create(rounded_rect2); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect2_label2, "SCL");                  // 设置文本内容
+    lv_obj_align(rounded_rect2_label1, LV_ALIGN_TOP_MID, 0, 2);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect2_label2 = lv_label_create(rounded_rect2); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect2_label2, "SCL");                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect2_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect2_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect2_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
     lv_obj_t *rounded_rect3 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect3, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect3, 50, 35);
     lv_obj_set_pos(rounded_rect3, 106, 205);
-    lv_obj_set_style_radius(rounded_rect3, 5, LV_PART_MAIN);                        // 圆角半径20
-    lv_obj_set_style_bg_color(rounded_rect3, lv_color_hex(0x1E90FF), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect3_label1 = lv_label_create(rounded_rect3);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect3_label1, "8");                                   // 设置文本内容
+    lv_obj_set_style_radius(rounded_rect3, 5, LV_PART_MAIN);                        // 鍦嗚鍗婂緞20
+    lv_obj_set_style_bg_color(rounded_rect3, lv_color_hex(0x1E90FF), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect3_label1 = lv_label_create(rounded_rect3);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect3_label1, "8");                                   // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect3_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect3_label1, LV_ALIGN_TOP_MID, 0, 2);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect3_label2 = lv_label_create(rounded_rect3); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect3_label2, "SDA");                  // 设置文本内容
+    lv_obj_align(rounded_rect3_label1, LV_ALIGN_TOP_MID, 0, 2);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect3_label2 = lv_label_create(rounded_rect3); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect3_label2, "SDA");                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect3_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect3_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect3_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
-    lv_obj_t *volt_label1 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(volt_label1, "#FFD700 ROW1#");       // 设置文本内容
+    lv_obj_t *volt_label1 = lv_label_create(lv_scr_act()); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(volt_label1, "#FFD700 ROW1#");       // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(volt_label1, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(volt_label1, 180, 210);
     lv_label_set_recolor(volt_label1, true);
 
-    lv_obj_t *volt_label2 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(volt_label2, "#00FFFF I2C Device#"); // 设置文本内容
+    lv_obj_t *volt_label2 = lv_label_create(lv_scr_act()); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(volt_label2, "#00FFFF I2C Device#"); // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(volt_label2, &lv_font_montserrat_28, 0);
     lv_obj_set_pos(volt_label2, 15, 26);
     lv_label_set_recolor(volt_label2, true);
@@ -1491,7 +1489,7 @@ void i2c_init(void)
     lv_style_set_border_width(&i2con_style, 2);
 
     i2con = lv_btn_create(lv_scr_act());
-    lv_obj_add_style(i2con, &i2con_style, 0); // 将样式应用到矩形上
+    lv_obj_add_style(i2con, &i2con_style, 0); // 灏嗘牱寮忓簲鐢ㄥ埌鐭╁舰涓?
     lv_obj_set_size(i2con, 90, 45);
     lv_obj_set_pos(i2con, 180, 20);
     lv_obj_add_event_cb(i2con, i2conbtn_event_cb, LV_EVENT_CLICKED, NULL);
@@ -1507,7 +1505,6 @@ void voltmeter_init(void)
 
     lv_obj_clean(lv_scr_act());
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
-    lv_obj_add_event_cb(lv_scr_act(), longpress_event_handler_back, LV_EVENT_LONG_PRESSED, NULL);
     ina266_flag = 1;
     digitalWrite(1, LOW);
     lv_obj_t *label1 = lv_label_create(lv_scr_act());
@@ -1517,7 +1514,7 @@ void voltmeter_init(void)
     lv_obj_t *label2 = lv_label_create(lv_scr_act());
     lv_obj_set_style_text_font(label2, &lv_font_montserrat_28, 0);
     lv_obj_set_pos(label2, 200, 20);
-    lv_label_set_text(label2, "#FF0000 V#"); // 设置文本内容
+    lv_label_set_text(label2, "#FF0000 V#"); // 璁剧疆鏂囨湰鍐呭
     lv_label_set_recolor(label2, true);
 
     volt_chart = lv_chart_create(lv_scr_act());
@@ -1539,36 +1536,36 @@ void voltmeter_init(void)
     lv_obj_remove_style(rounded_rect1, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect1, 50, 35);
     lv_obj_set_pos(rounded_rect1, 6, 205);
-    lv_obj_set_style_radius(rounded_rect1, 5, LV_PART_MAIN);                        // 圆角半径20
-    lv_obj_set_style_bg_color(rounded_rect1, lv_color_hex(0x696969), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect1_label1 = lv_label_create(rounded_rect1);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect1_label1, "1");                                   // 设置文本内容
+    lv_obj_set_style_radius(rounded_rect1, 5, LV_PART_MAIN);                        // 鍦嗚鍗婂緞20
+    lv_obj_set_style_bg_color(rounded_rect1, lv_color_hex(0x696969), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect1_label1 = lv_label_create(rounded_rect1);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect1_label1, "1");                                   // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect1_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect1_label1, LV_ALIGN_TOP_MID, 0, 2);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect1_label2 = lv_label_create(rounded_rect1); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect1_label2, "GND");                  // 设置文本内容
+    lv_obj_align(rounded_rect1_label1, LV_ALIGN_TOP_MID, 0, 2);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect1_label2 = lv_label_create(rounded_rect1); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect1_label2, "GND");                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect1_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect1_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect1_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
     lv_obj_t *rounded_rect2 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect2, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect2, 50, 35);
     lv_obj_set_pos(rounded_rect2, 56, 205);
-    lv_obj_set_style_radius(rounded_rect2, 5, LV_PART_MAIN);                        // 圆角半径20
-    lv_obj_set_style_bg_color(rounded_rect2, lv_color_hex(0x8B0000), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect2_label1 = lv_label_create(rounded_rect2);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect2_label1, "2");                                   // 设置文本内容
+    lv_obj_set_style_radius(rounded_rect2, 5, LV_PART_MAIN);                        // 鍦嗚鍗婂緞20
+    lv_obj_set_style_bg_color(rounded_rect2, lv_color_hex(0x8B0000), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect2_label1 = lv_label_create(rounded_rect2);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect2_label1, "2");                                   // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect2_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect2_label1, LV_ALIGN_TOP_MID, 0, 2);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect2_label2 = lv_label_create(rounded_rect2); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect2_label2, "VIN");                  // 设置文本内容
+    lv_obj_align(rounded_rect2_label1, LV_ALIGN_TOP_MID, 0, 2);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect2_label2 = lv_label_create(rounded_rect2); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect2_label2, "VIN");                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect2_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect2_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect2_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
-    lv_obj_t *volt_label1 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(volt_label1, "#FFD700 ROW1#");       // 设置文本内容
+    lv_obj_t *volt_label1 = lv_label_create(lv_scr_act()); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(volt_label1, "#FFD700 ROW1#");       // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(volt_label1, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(volt_label1, 180, 210);
     lv_label_set_recolor(volt_label1, true);
@@ -1580,7 +1577,7 @@ void DSO_init(void)
     lv_obj_clean(lv_scr_act());
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
-    lv_obj_add_event_cb(lv_scr_act(), longpress_event_handler_back, LV_EVENT_LONG_PRESSED, NULL);
+
 
     DSO_flag = 1;
 
@@ -1604,7 +1601,7 @@ void DSO_init(void)
     lv_obj_set_style_text_color(max_label, lv_color_hex(0xFF0000), 0);
     lv_obj_set_style_text_font(max_label, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(max_label, 10, 10);
-    lv_label_set_text(max_label, "max"); // 设置文本内容
+    lv_label_set_text(max_label, "max"); // 璁剧疆鏂囨湰鍐呭
     lv_obj_t *maxValue_label = lv_label_create(lv_scr_act());
     lv_obj_set_style_text_color(maxValue_label, lv_color_hex(0xFF0000), 0);
     lv_obj_set_style_text_font(maxValue_label, &lv_font_montserrat_20, 0);
@@ -1614,7 +1611,7 @@ void DSO_init(void)
     lv_obj_set_style_text_color(min_label, lv_color_hex(0x00FF7F), 0);
     lv_obj_set_style_text_font(min_label, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(min_label, 98, 10);
-    lv_label_set_text(min_label, "min"); // 设置文本内容
+    lv_label_set_text(min_label, "min"); // 璁剧疆鏂囨湰鍐呭
     lv_obj_t *minValue_label = lv_label_create(lv_scr_act());
     lv_obj_set_style_text_color(minValue_label, lv_color_hex(0x00FF7F), 0);
     lv_obj_set_style_text_font(minValue_label, &lv_font_montserrat_20, 0);
@@ -1624,7 +1621,7 @@ void DSO_init(void)
     lv_obj_set_style_text_color(vpp_label, lv_color_hex(0x00FFFF), 0);
     lv_obj_set_style_text_font(vpp_label, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(vpp_label, 185, 10);
-    lv_label_set_text(vpp_label, "vpp"); // 设置文本内容
+    lv_label_set_text(vpp_label, "vpp"); // 璁剧疆鏂囨湰鍐呭
     lv_obj_t *peakToPeakValue_label = lv_label_create(lv_scr_act());
     lv_obj_set_style_text_color(peakToPeakValue_label, lv_color_hex(0x00FFFF), 0);
     lv_obj_set_style_text_font(peakToPeakValue_label, &lv_font_montserrat_20, 0);
@@ -1638,42 +1635,42 @@ void DSO_init(void)
     lv_obj_remove_style(rounded_rect1, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect1, 50, 35);
     lv_obj_set_pos(rounded_rect1, 6, 205);
-    lv_obj_set_style_radius(rounded_rect1, 5, LV_PART_MAIN);                        // 圆角半径20
-    lv_obj_set_style_bg_color(rounded_rect1, lv_color_hex(0x696969), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect1_label1 = lv_label_create(rounded_rect1);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect1_label1, "1");                                   // 设置文本内容
+    lv_obj_set_style_radius(rounded_rect1, 5, LV_PART_MAIN);                        // 鍦嗚鍗婂緞20
+    lv_obj_set_style_bg_color(rounded_rect1, lv_color_hex(0x696969), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect1_label1 = lv_label_create(rounded_rect1);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect1_label1, "1");                                   // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect1_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect1_label1, LV_ALIGN_TOP_MID, 0, 2);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect1_label2 = lv_label_create(rounded_rect1); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect1_label2, "GND");                  // 设置文本内容
+    lv_obj_align(rounded_rect1_label1, LV_ALIGN_TOP_MID, 0, 2);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect1_label2 = lv_label_create(rounded_rect1); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect1_label2, "GND");                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect1_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect1_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect1_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
     lv_obj_t *rounded_rect2 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect2, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect2, 50, 35);
     lv_obj_set_pos(rounded_rect2, 56, 205);
-    lv_obj_set_style_radius(rounded_rect2, 5, LV_PART_MAIN);                        // 圆角半径20
-    lv_obj_set_style_bg_color(rounded_rect2, lv_color_hex(0xFF8C00), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect2_label1 = lv_label_create(rounded_rect2);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect2_label1, "5");                                   // 设置文本内容
+    lv_obj_set_style_radius(rounded_rect2, 5, LV_PART_MAIN);                        // 鍦嗚鍗婂緞20
+    lv_obj_set_style_bg_color(rounded_rect2, lv_color_hex(0xFF8C00), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect2_label1 = lv_label_create(rounded_rect2);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect2_label1, "5");                                   // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect2_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect2_label1, LV_ALIGN_TOP_MID, 0, 2);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect2_label2 = lv_label_create(rounded_rect2); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect2_label2, "IN");                   // 设置文本内容
+    lv_obj_align(rounded_rect2_label1, LV_ALIGN_TOP_MID, 0, 2);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect2_label2 = lv_label_create(rounded_rect2); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect2_label2, "IN");                   // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect2_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect2_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect2_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
-    lv_obj_t *volt_label1 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(volt_label1, "#FFD700 ROW1#");       // 设置文本内容
+    lv_obj_t *volt_label1 = lv_label_create(lv_scr_act()); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(volt_label1, "#FFD700 ROW1#");       // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(volt_label1, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(volt_label1, 115, 210);
     lv_label_set_recolor(volt_label1, true);
 
-    lv_obj_t *volt_label2 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(volt_label2, "#FFD700 0.55v/Div#");  // 设置文本内容
+    lv_obj_t *volt_label2 = lv_label_create(lv_scr_act()); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(volt_label2, "#FFD700 0.55v/Div#");  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(volt_label2, &lv_font_montserrat_18, 0);
     lv_obj_set_pos(volt_label2, 190, 211);
     lv_label_set_recolor(volt_label2, true);
@@ -1685,71 +1682,71 @@ void wirelessuart_init(void)
     lv_obj_clean(lv_scr_act());
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
-    lv_obj_add_event_cb(lv_scr_act(), longpress_event_handler_back, LV_EVENT_LONG_PRESSED, NULL);
+
 
     lv_obj_t *rounded_rect1 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect1, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect1, 50, 35);
     lv_obj_set_pos(rounded_rect1, 6, 205);
-    lv_obj_set_style_radius(rounded_rect1, 5, LV_PART_MAIN);                        // 圆角半径20
-    lv_obj_set_style_bg_color(rounded_rect1, lv_color_hex(0x696969), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect1_label1 = lv_label_create(rounded_rect1);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect1_label1, "1");                                   // 设置文本内容
+    lv_obj_set_style_radius(rounded_rect1, 5, LV_PART_MAIN);                        // 鍦嗚鍗婂緞20
+    lv_obj_set_style_bg_color(rounded_rect1, lv_color_hex(0x696969), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect1_label1 = lv_label_create(rounded_rect1);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect1_label1, "1");                                   // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect1_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect1_label1, LV_ALIGN_TOP_MID, 0, 2);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect1_label2 = lv_label_create(rounded_rect1); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect1_label2, "GND");                  // 设置文本内容
+    lv_obj_align(rounded_rect1_label1, LV_ALIGN_TOP_MID, 0, 2);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect1_label2 = lv_label_create(rounded_rect1); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect1_label2, "GND");                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect1_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect1_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect1_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
     lv_obj_t *rounded_rect2 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect2, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect2, 50, 35);
     lv_obj_set_pos(rounded_rect2, 56, 205);
-    lv_obj_set_style_radius(rounded_rect2, 5, LV_PART_MAIN);                        // 圆角半径20
-    lv_obj_set_style_bg_color(rounded_rect2, lv_color_hex(0xFFA500), LV_PART_MAIN); // 背景色为橙色
-    lv_obj_t *rounded_rect2_label1 = lv_label_create(rounded_rect2);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect2_label1, "12");                                  // 设置文本内容
+    lv_obj_set_style_radius(rounded_rect2, 5, LV_PART_MAIN);                        // 鍦嗚鍗婂緞20
+    lv_obj_set_style_bg_color(rounded_rect2, lv_color_hex(0xFFA500), LV_PART_MAIN); // 鑳屾櫙鑹蹭负姗欒壊
+    lv_obj_t *rounded_rect2_label1 = lv_label_create(rounded_rect2);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect2_label1, "12");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect2_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect2_label1, LV_ALIGN_TOP_MID, 0, 2);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect2_label2 = lv_label_create(rounded_rect2); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect2_label2, "RX");                   // 设置文本内容
+    lv_obj_align(rounded_rect2_label1, LV_ALIGN_TOP_MID, 0, 2);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect2_label2 = lv_label_create(rounded_rect2); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect2_label2, "RX");                   // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect2_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect2_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect2_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
     lv_obj_t *rounded_rect3 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect3, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect3, 50, 35);
     lv_obj_set_pos(rounded_rect3, 106, 205);
-    lv_obj_set_style_radius(rounded_rect3, 5, LV_PART_MAIN);                        // 圆角半径20
-    lv_obj_set_style_bg_color(rounded_rect3, lv_color_hex(0xFFA500), LV_PART_MAIN); // 背景色为橙色
-    lv_obj_t *rounded_rect3_label1 = lv_label_create(rounded_rect3);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect3_label1, "13");                                  // 设置文本内容
+    lv_obj_set_style_radius(rounded_rect3, 5, LV_PART_MAIN);                        // 鍦嗚鍗婂緞20
+    lv_obj_set_style_bg_color(rounded_rect3, lv_color_hex(0xFFA500), LV_PART_MAIN); // 鑳屾櫙鑹蹭负姗欒壊
+    lv_obj_t *rounded_rect3_label1 = lv_label_create(rounded_rect3);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect3_label1, "13");                                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect3_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect3_label1, LV_ALIGN_TOP_MID, 0, 2);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect3_label2 = lv_label_create(rounded_rect3); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect3_label2, "TX");                   // 设置文本内容
+    lv_obj_align(rounded_rect3_label1, LV_ALIGN_TOP_MID, 0, 2);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect3_label2 = lv_label_create(rounded_rect3); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect3_label2, "TX");                   // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect3_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect3_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect3_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
-    lv_obj_t *volt_label1 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(volt_label1, "#FFD700 ROW1#");       // 设置文本内容
+    lv_obj_t *volt_label1 = lv_label_create(lv_scr_act()); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(volt_label1, "#FFD700 ROW1#");       // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(volt_label1, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(volt_label1, 180, 210);
     lv_label_set_recolor(volt_label1, true);
 
-    lv_obj_t *volt_label2 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形上
+    lv_obj_t *volt_label2 = lv_label_create(lv_scr_act()); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
     lv_obj_set_style_text_color(volt_label2, lv_color_hex(0x1E90FF), 0);
-    lv_label_set_text(volt_label2, LV_SYMBOL_BLUETOOTH "BLE"); // 设置文本内容
+    lv_label_set_text(volt_label2, LV_SYMBOL_BLUETOOTH "BLE"); // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(volt_label2, &lv_font_montserrat_28, 0);
     lv_obj_set_pos(volt_label2, 6, 32);
     lv_label_set_recolor(volt_label2, true);
 
-    lv_obj_t *volt_label3 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(volt_label3, "#00FFFF baudRate#");   // 设置文本内容
+    lv_obj_t *volt_label3 = lv_label_create(lv_scr_act()); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(volt_label3, "#00FFFF baudRate#");   // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(volt_label3, &lv_font_montserrat_18, 0);
     lv_obj_set_pos(volt_label3, 170, 5);
     lv_label_set_recolor(volt_label3, true);
@@ -1785,7 +1782,7 @@ void wirelessuart_init(void)
     lv_style_set_border_width(&wireless_uart_style, 2);
 
     wireless_uart_btn = lv_btn_create(lv_scr_act());
-    lv_obj_add_style(wireless_uart_btn, &wireless_uart_style, 0); // 将样式应用到矩形上
+    lv_obj_add_style(wireless_uart_btn, &wireless_uart_style, 0); // 灏嗘牱寮忓簲鐢ㄥ埌鐭╁舰涓?
     lv_obj_set_size(wireless_uart_btn, 65, 52);
     lv_obj_set_pos(wireless_uart_btn, 100, 20);
     lv_obj_add_event_cb(wireless_uart_btn, wireless_uart_btn_event_cb, LV_EVENT_CLICKED, NULL);
@@ -1802,7 +1799,7 @@ void FREcount_init(void)
     lv_obj_clean(lv_scr_act());
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
-    lv_obj_add_event_cb(lv_scr_act(), longpress_event_handler_back, LV_EVENT_LONG_PRESSED, NULL);
+
 
     FREcount_flag = 1;
 
@@ -1810,42 +1807,42 @@ void FREcount_init(void)
     lv_obj_remove_style(rounded_rect1, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect1, 50, 35);
     lv_obj_set_pos(rounded_rect1, 6, 205);
-    lv_obj_set_style_radius(rounded_rect1, 5, LV_PART_MAIN);                        // 圆角半径20
-    lv_obj_set_style_bg_color(rounded_rect1, lv_color_hex(0x696969), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect1_label1 = lv_label_create(rounded_rect1);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect1_label1, "1");                                   // 设置文本内容
+    lv_obj_set_style_radius(rounded_rect1, 5, LV_PART_MAIN);                        // 鍦嗚鍗婂緞20
+    lv_obj_set_style_bg_color(rounded_rect1, lv_color_hex(0x696969), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect1_label1 = lv_label_create(rounded_rect1);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect1_label1, "1");                                   // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect1_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect1_label1, LV_ALIGN_TOP_MID, 0, 2);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect1_label2 = lv_label_create(rounded_rect1); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect1_label2, "GND");                  // 设置文本内容
+    lv_obj_align(rounded_rect1_label1, LV_ALIGN_TOP_MID, 0, 2);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect1_label2 = lv_label_create(rounded_rect1); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect1_label2, "GND");                  // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect1_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect1_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect1_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
     lv_obj_t *rounded_rect2 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect2, 0, LV_PART_SCROLLBAR);
     lv_obj_set_size(rounded_rect2, 50, 35);
     lv_obj_set_pos(rounded_rect2, 56, 205);
-    lv_obj_set_style_radius(rounded_rect2, 5, LV_PART_MAIN);                        // 圆角半径20
-    lv_obj_set_style_bg_color(rounded_rect2, lv_color_hex(0x8B0000), LV_PART_MAIN); // 背景色为绿色
-    lv_obj_t *rounded_rect2_label1 = lv_label_create(rounded_rect2);                // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect2_label1, "6");                                   // 设置文本内容
+    lv_obj_set_style_radius(rounded_rect2, 5, LV_PART_MAIN);                        // 鍦嗚鍗婂緞20
+    lv_obj_set_style_bg_color(rounded_rect2, lv_color_hex(0x8B0000), LV_PART_MAIN); // 鑳屾櫙鑹蹭负缁胯壊
+    lv_obj_t *rounded_rect2_label1 = lv_label_create(rounded_rect2);                // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect2_label1, "6");                                   // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect2_label1, &lv_font_montserrat_12, 0);
-    lv_obj_align(rounded_rect2_label1, LV_ALIGN_TOP_MID, 0, 2);      // 将文本居中对齐到圆角矩形
-    lv_obj_t *rounded_rect2_label2 = lv_label_create(rounded_rect2); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(rounded_rect2_label2, "IN");                   // 设置文本内容
+    lv_obj_align(rounded_rect2_label1, LV_ALIGN_TOP_MID, 0, 2);      // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
+    lv_obj_t *rounded_rect2_label2 = lv_label_create(rounded_rect2); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(rounded_rect2_label2, "IN");                   // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(rounded_rect2_label2, &lv_font_montserrat_16, 0);
-    lv_obj_align(rounded_rect2_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 将文本居中对齐到圆角矩形
+    lv_obj_align(rounded_rect2_label2, LV_ALIGN_BOTTOM_MID, 0, 0); // 灏嗘枃鏈眳涓榻愬埌鍦嗚鐭╁舰
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
-    lv_obj_t *FREcount_label1 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形上
-    lv_label_set_text(FREcount_label1, "#FFD700 ROW1#");       // 设置文本内容
+    lv_obj_t *FREcount_label1 = lv_label_create(lv_scr_act()); // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(FREcount_label1, "#FFD700 ROW1#");       // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(FREcount_label1, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(FREcount_label1, 180, 210);
     lv_label_set_recolor(FREcount_label1, true);
 
-    lv_obj_t *FREcount_label2 = lv_label_create(lv_scr_act());        // 将文本标签添加到圆角矩形上
-    lv_label_set_text(FREcount_label2, "#00FFFF Frequency Counter#"); // 设置文本内容
+    lv_obj_t *FREcount_label2 = lv_label_create(lv_scr_act());        // 灏嗘枃鏈爣绛炬坊鍔犲埌鍦嗚鐭╁舰涓?
+    lv_label_set_text(FREcount_label2, "#00FFFF Frequency Counter#"); // 璁剧疆鏂囨湰鍐呭
     lv_obj_set_style_text_font(FREcount_label2, &lv_font_montserrat_24, 0);
     lv_obj_set_pos(FREcount_label2, 15, 26);
     lv_label_set_recolor(FREcount_label2, true);
@@ -1859,7 +1856,7 @@ void FREcount_init(void)
     lv_obj_t *Hz_label = lv_label_create(lv_scr_act());
     lv_obj_set_style_text_font(Hz_label, &lv_font_montserrat_28, 0);
     lv_obj_set_pos(Hz_label, 236, 110);
-    lv_label_set_text(Hz_label, "#FF0000 Hz#"); // 设置文本内容
+    lv_label_set_text(Hz_label, "#FF0000 Hz#"); // 璁剧疆鏂囨湰鍐呭
     lv_label_set_recolor(Hz_label, true);
 }
 
@@ -1868,7 +1865,6 @@ void readme_init(void)
 
     lv_obj_clean(lv_scr_act());
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
-    lv_obj_add_event_cb(lv_scr_act(), longpress_event_handler_back, LV_EVENT_LONG_PRESSED, NULL);
 
     lv_obj_t *img1 = lv_img_create(lv_scr_act());
     lv_img_set_src(img1, &kobe_png);                         // Replace with your image variable or path
@@ -1880,8 +1876,9 @@ void readme_init(void)
 
 void ui_init(void)
 {
-    // 设置显示主题
+    // 璁剧疆鏄剧ず涓婚
     lv_theme_default_init(NULL, lv_color_hex(0x000000), lv_color_hex(0xFF0000), LV_THEME_DEFAULT_DARK, NULL);
+    lv_obj_add_event_cb(lv_scr_act(), longpress_event_handler_back, LV_EVENT_LONG_PRESSED, NULL);
     create_boot_animation();
 
     // lv_obj_set_style_border_color(lv_scr_act(), lv_color_white(), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1898,3 +1895,5 @@ void ui_init(void)
     // lv_obj_align(p_label, LV_ALIGN_CENTER, 0, 0);
     // lv_label_set_text(p_label, "Hello World");
 }
+
+
