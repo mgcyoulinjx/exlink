@@ -29,6 +29,7 @@ static void save_main_screen_state(void) {
         else if (focused == btn8) saved_focused_index = 8;
         else if (focused == btn9) saved_focused_index = 9;
         else if (focused == btn10) saved_focused_index = 10;
+        else if (focused == btn11) saved_focused_index = 11;
         else saved_focused_index = -1; // 无焦点
     }
 }
@@ -41,7 +42,7 @@ static void restore_main_screen_state(void) {
         // 更新snap以确保位置固定
         lv_obj_update_snap(panel, LV_ANIM_OFF);
     }
-    if (group && saved_focused_index >= 1 && saved_focused_index <= 10) {
+    if (group && saved_focused_index >= 1 && saved_focused_index <= 11) {
         lv_obj_t *btn = NULL;
         switch (saved_focused_index) {
             case 1: btn = btn1; break;
@@ -54,6 +55,7 @@ static void restore_main_screen_state(void) {
             case 8: btn = btn8; break;
             case 9: btn = btn9; break;
             case 10: btn = btn10; break;
+            case 11: btn = btn11; break;
         }
         if (btn) {
             // 临时禁用滚动到焦点功能，防止焦点设置时自动滚动
@@ -237,6 +239,21 @@ void btn10_event_cb(lv_event_t *e)
             slider_update_timer = NULL;        // 清空指针以避免悬空指针
         }
         readme_init();
+    }
+}
+
+void btn11_event_cb(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        save_main_screen_state();
+        if (slider_update_timer)
+        {
+            lv_timer_del(slider_update_timer);
+            slider_update_timer = NULL;
+        }
+        setting_init();
     }
 }
 
@@ -434,7 +451,7 @@ void clear_keyboard_event_handler(lv_event_t *e)
 void slider_event_cb(lv_event_t *e)
 {
     int value = lv_slider_get_value(slider); // 获取滑动条的值
-    switch (11 - value)
+    switch (12 - value)
     {
     case 1:
         lv_group_focus_obj(btn1);
@@ -466,12 +483,53 @@ void slider_event_cb(lv_event_t *e)
     case 10:
         lv_group_focus_obj(btn10);
         break;
+    case 11:
+        lv_group_focus_obj(btn11);
+        break;
     default:
         break;
     }
 }
 
 static bool back_navigation_in_progress = false;
+static bool swipe_back_enabled = true;
+
+void set_swipe_back_enabled(bool enabled)
+{
+    swipe_back_enabled = enabled;
+}
+
+static void enable_gesture_bubble_recursive(lv_obj_t *obj)
+{
+    if (!obj)
+    {
+        return;
+    }
+
+    lv_obj_add_flag(obj, LV_OBJ_FLAG_GESTURE_BUBBLE);
+
+    uint32_t child_count = lv_obj_get_child_cnt(obj);
+    for (uint32_t idx = 0; idx < child_count; idx++)
+    {
+        enable_gesture_bubble_recursive(lv_obj_get_child(obj, idx));
+    }
+}
+
+void configure_swipe_back_for_current_screen(bool enabled)
+{
+    lv_obj_t *screen = lv_scr_act();
+    if (!screen)
+    {
+        return;
+    }
+
+    set_swipe_back_enabled(enabled);
+    while (lv_obj_remove_event_cb(screen, event_handler_back))
+    {
+    }
+    lv_obj_add_event_cb(screen, event_handler_back, LV_EVENT_ALL, NULL);
+    enable_gesture_bubble_recursive(screen);
+}
 
 static void cleanup_runtime_tasks_and_timers(void)
 {
@@ -574,6 +632,11 @@ void event_handler_back(lv_event_t *e)
     }
 
     if (code_new != LV_EVENT_RELEASED)
+    {
+        return;
+    }
+
+    if (!swipe_back_enabled)
     {
         return;
     }

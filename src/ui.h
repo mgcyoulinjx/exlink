@@ -30,7 +30,9 @@ extern "C"
     lv_obj_t *btn8;
     lv_obj_t *btn9;
     lv_obj_t *btn10;
+    lv_obj_t *btn11;
     lv_obj_t *bat_label;
+    lv_obj_t *bat_voltage_label;
 
     lv_obj_t *ui_Screen1;
     lv_obj_t *ui_Label1;
@@ -97,6 +99,8 @@ extern "C"
     lv_obj_t *slider;
     extern int saved_scroll_y;
     extern int saved_focused_index;
+    extern int buzzer_volume_level;
+    void persist_buzzer_volume_level(int level);
 
     LV_IMG_DECLARE(ui_img_game3_png);
     LV_IMG_DECLARE(Exlink_png);
@@ -112,6 +116,7 @@ extern "C"
     LV_IMG_DECLARE(pwmint_png);
     LV_IMG_DECLARE(FREcounter_png);
     LV_IMG_DECLARE(kobe_png);
+    LV_IMG_DECLARE(setting_png);
 
     void create_boot_animation(void);
     void my_gui(void);
@@ -127,6 +132,7 @@ extern "C"
     void wirelessuart_init(void);
     void FREcount_init(void);
     void readme_init(void);
+    void setting_init(void);
 
 #ifdef __cplusplus
 } /*extern "C"*/

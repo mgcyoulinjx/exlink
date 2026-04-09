@@ -1,5 +1,5 @@
-
-#define SWIPE_THRESHOLD 30 // 最小滑动距离阈值
+#include <stdbool.h>
+#define SWIPE_THRESHOLD 30 // 最小滑动距离阈�?
 
 extern int mcp4107_flag;
 extern int pwm_flag;
@@ -18,6 +18,7 @@ extern lv_obj_t *btn7;
 extern lv_obj_t *btn8;
 extern lv_obj_t *btn9;
 extern lv_obj_t *btn10;
+extern lv_obj_t *btn11;
 
 void ui_event_Screen1(lv_event_t *e);
 extern lv_obj_t *ui_Screen1;
@@ -42,6 +43,7 @@ void btn7_event_cb(lv_event_t *e);
 void btn8_event_cb(lv_event_t *e);
 void btn9_event_cb(lv_event_t *e);
 void btn10_event_cb(lv_event_t *e);
+void btn11_event_cb(lv_event_t *e);
 
 void i2conbtn_event_cb(lv_event_t *e);
 
@@ -57,6 +59,8 @@ void V3btn_event_cb(lv_event_t *e);
 void uart_btn_event_cb(lv_event_t *e);
 void event_handler_back(lv_event_t *e);
 void longpress_event_handler_back(lv_event_t *e);
+void set_swipe_back_enabled(bool enabled);
+void configure_swipe_back_for_current_screen(bool enabled);
 
 void keyboard_event_handler(lv_event_t *e);
 void fretext_event_handler(lv_event_t *e);
