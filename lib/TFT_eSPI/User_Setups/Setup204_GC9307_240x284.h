@@ -1,4 +1,5 @@
 #define USER_SETUP_ID 204
+#define DISABLE_ALL_LIBRARY_WARNINGS
 
 #define GC9307_DRIVER // Configure all registers
 

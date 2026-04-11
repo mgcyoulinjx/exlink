@@ -5,8 +5,6 @@
 static int32_t touch_start_x;
 static int32_t touch_start_y;
 
-int i = 0;
-
 // 声明一个静态变量来存储上一次点击的时间
 static uint32_t last_click_time = 0;
 // 设置双击的时间阈值（单位为毫秒）
@@ -259,12 +257,11 @@ void btn11_event_cb(lv_event_t *e)
 
 void poweronbtn_event_cb(lv_event_t *e)
 {
-
     lv_event_code_t event_code = lv_event_get_code(e);
     if (event_code == LV_EVENT_CLICKED)
     {
-        i++;
-        if (i % 2 == 1)
+        bool enabled = digitalRead(1) == LOW;
+        if (enabled)
         {
             digitalWrite(1, HIGH);
             lv_obj_set_style_text_color(poweron_label, lv_color_hex(0x00FF7F), 0);
@@ -279,19 +276,16 @@ void poweronbtn_event_cb(lv_event_t *e)
 
 void pwm_btn_event_cb(lv_event_t *e)
 {
-
     lv_event_code_t event_code = lv_event_get_code(e);
     if (event_code == LV_EVENT_CLICKED)
     {
-        i++;
-        if (i % 2 == 1)
+        pwm_flag = pwm_flag ? 0 : 1;
+        if (pwm_flag)
         {
-            pwm_flag = 1;
             lv_obj_set_style_bg_color(pwm_btn, lv_color_hex(0x00FF7F), 0);
         }
         else
         {
-            pwm_flag = 0;
             lv_obj_set_style_bg_color(pwm_btn, lv_color_hex(0xFF0000), 0);
         }
     }
@@ -299,19 +293,16 @@ void pwm_btn_event_cb(lv_event_t *e)
 
 void i2conbtn_event_cb(lv_event_t *e)
 {
-
     lv_event_code_t event_code = lv_event_get_code(e);
     if (event_code == LV_EVENT_CLICKED)
     {
-        i++;
-        if (i % 2 == 1)
+        i2cscan_flag = i2cscan_flag ? 0 : 1;
+        if (i2cscan_flag)
         {
-            i2cscan_flag = 1;
             lv_obj_set_style_bg_color(i2con, lv_color_hex(0x00FF7F), 0);
         }
         else
         {
-            i2cscan_flag = 0;
             lv_obj_set_style_bg_color(i2con, lv_color_hex(0xFF0000), 0);
         }
     }
@@ -319,19 +310,16 @@ void i2conbtn_event_cb(lv_event_t *e)
 
 void uart_btn_event_cb(lv_event_t *e)
 {
-
     lv_event_code_t event_code = lv_event_get_code(e);
     if (event_code == LV_EVENT_CLICKED)
     {
-        i++;
-        if (i % 2 == 1)
+        uart_helper_flag = uart_helper_flag ? 0 : 1;
+        if (uart_helper_flag)
         {
-            uart_helper_flag = 1;
             lv_obj_set_style_bg_color(uart_btn, lv_color_hex(0x00FF7F), 0);
         }
         else
         {
-            uart_helper_flag = 0;
             lv_obj_set_style_bg_color(uart_btn, lv_color_hex(0xFF0000), 0);
         }
     }
@@ -342,15 +330,13 @@ void wireless_uart_btn_event_cb(lv_event_t *e)
     lv_event_code_t event_code = lv_event_get_code(e);
     if (event_code == LV_EVENT_CLICKED)
     {
-        i++;
-        if (i % 2 == 1)
+        BluetoothSerial_flag = BluetoothSerial_flag ? 0 : 1;
+        if (BluetoothSerial_flag)
         {
-            BluetoothSerial_flag = 1;
             lv_obj_set_style_bg_color(wireless_uart_btn, lv_color_hex(0x00FF7F), 0);
         }
         else
         {
-            BluetoothSerial_flag = 0;
             lv_obj_set_style_bg_color(wireless_uart_btn, lv_color_hex(0xFF0000), 0);
         }
     }

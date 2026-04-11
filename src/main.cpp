@@ -96,8 +96,10 @@ BLECharacteristic *pRxCharacteristic; // BLECharacteristic指针 pRxCharacterist
 bool deviceConnected = false;         // 本次连接状态
 bool oldDeviceConnected = false;      // 上次连接状态
 uint8_t txValue = 0;
-static char pending_ble_rx_text[256];
+static char pending_ble_rx_text[512];
 static volatile size_t pending_ble_rx_len = 0;
+static char uart_rx_chunk[128];
+static char ble_tx_chunk[128];
 
 static void append_wireless_uart_text(const char *text, bool add_newline)
 {
@@ -116,6 +118,37 @@ static void append_wireless_uart_text(const char *text, bool add_newline)
   {
     lv_textarea_add_text(wireless_uart_extarea, "\n");
   }
+}
+
+static void append_uart_helper_text(const char *text)
+{
+  if (!uart_extarea || !text || text[0] == '\0')
+  {
+    return;
+  }
+
+  if (strlen(lv_textarea_get_text(uart_extarea)) > 768)
+  {
+    lv_textarea_set_text(uart_extarea, "");
+  }
+
+  lv_textarea_add_text(uart_extarea, text);
+}
+
+static size_t read_serial_chunk(char *buffer, size_t buffer_size)
+{
+  if (!buffer || buffer_size < 2)
+  {
+    return 0;
+  }
+
+  size_t count = 0;
+  while (count < buffer_size - 1 && Serial.available() > 0)
+  {
+    buffer[count++] = (char)Serial.read();
+  }
+  buffer[count] = '\0';
+  return count;
 }
 
 class MyServerCallbacks : public BLEServerCallbacks // BLE连接回调函数
@@ -141,16 +174,29 @@ class MyCallbacks : public BLECharacteristicCallbacks // BLE接收回调函数
     {
       Serial.write((const uint8_t *)rxValue.data(), rxValue.length());
 
-      size_t copy_len = rxValue.length();
-      if (copy_len > sizeof(pending_ble_rx_text) - 2)
+      size_t available_space = sizeof(pending_ble_rx_text) - pending_ble_rx_len - 1;
+      if (available_space == 0)
       {
-        copy_len = sizeof(pending_ble_rx_text) - 2;
+        pending_ble_rx_len = 0;
+        pending_ble_rx_text[0] = '\0';
+        available_space = sizeof(pending_ble_rx_text) - 1;
       }
 
-      memcpy(pending_ble_rx_text, rxValue.data(), copy_len);
-      pending_ble_rx_text[copy_len] = '\n';
-      pending_ble_rx_text[copy_len + 1] = '\0';
-      pending_ble_rx_len = copy_len + 1;
+      size_t copy_len = rxValue.length();
+      if (copy_len > available_space)
+      {
+        copy_len = available_space;
+      }
+
+      memcpy(pending_ble_rx_text + pending_ble_rx_len, rxValue.data(), copy_len);
+      pending_ble_rx_len += copy_len;
+
+      if (pending_ble_rx_len < sizeof(pending_ble_rx_text) - 1 && (copy_len == 0 || pending_ble_rx_text[pending_ble_rx_len - 1] != '\n'))
+      {
+        pending_ble_rx_text[pending_ble_rx_len++] = '\n';
+      }
+
+      pending_ble_rx_text[pending_ble_rx_len] = '\0';
     }
   }
 };
@@ -404,10 +450,10 @@ void uart_helper_task() // 串口助手任务
       Serial.begin(newBaudRate);     // 以新波特率开始串口
       currentBaudRate = newBaudRate; // 更新当前波特率
     }
-    if (Serial.available() > 0)
+    size_t bytes_read = read_serial_chunk(uart_rx_chunk, sizeof(uart_rx_chunk));
+    if (bytes_read > 0)
     {
-      String input = Serial.readStringUntil('\n');
-      lv_textarea_add_text(uart_extarea, input.c_str());
+      append_uart_helper_text(uart_rx_chunk);
     }
   }
 }
@@ -686,19 +732,17 @@ void BluetoothSerial_task() // 无线串口任务（基于BLE实现）
         pending_ble_rx_text[0] = '\0';
       }
 
-      if (Serial.available() > 0)
+      size_t bytes_read = read_serial_chunk(ble_tx_chunk, sizeof(ble_tx_chunk));
+      if (bytes_read > 0)
       {
-        String strValue = Serial.readStringUntil('\n');
-        pTxCharacteristic->setValue((uint8_t *)strValue.c_str(), strValue.length());
+        pTxCharacteristic->setValue((uint8_t *)ble_tx_chunk, bytes_read);
         pTxCharacteristic->notify();
-        append_wireless_uart_text(strValue.c_str(), true);
-        delay(100);
+        append_wireless_uart_text(ble_tx_chunk, false);
       }
     }
 
     if (!deviceConnected && oldDeviceConnected) // 未连接时执行蓝牙广播
     {
-      delay(500);
       pServer->startAdvertising();
       Serial.println("start advertising");
       oldDeviceConnected = deviceConnected;

@@ -1475,7 +1475,8 @@ void uarthelper_init(void)
     uart_extarea = lv_textarea_create(lv_scr_act());
     lv_obj_set_size(uart_extarea, 269, 126);
     lv_obj_set_pos(uart_extarea, 6, 75);
-    lv_textarea_set_placeholder_text(uart_extarea, "Use '\\n' as the end of the usart information");
+    lv_textarea_set_max_length(uart_extarea, 1024);
+    lv_textarea_set_placeholder_text(uart_extarea, "USART monitor output");
 
     uart_list = lv_dropdown_create(lv_scr_act());
     lv_obj_set_size(uart_list, 105, 40);
@@ -1899,7 +1900,7 @@ void wirelessuart_init(void)
     lv_obj_set_size(wireless_uart_extarea, 269, 120);
     lv_obj_set_pos(wireless_uart_extarea, 6, 75);
     lv_textarea_set_max_length(wireless_uart_extarea, 1024);
-    lv_textarea_set_placeholder_text(wireless_uart_extarea, "Use '\\n' as the end of the usart information");
+    lv_textarea_set_placeholder_text(wireless_uart_extarea, "BLE passthrough monitor");
 
     static lv_style_t wireless_uart_style;
     lv_style_init(&wireless_uart_style);
