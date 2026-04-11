@@ -100,6 +100,9 @@ static char pending_ble_rx_text[512];
 static volatile size_t pending_ble_rx_len = 0;
 static char uart_rx_chunk[128];
 static char ble_tx_chunk[128];
+static const long kSupportedBaudRates[] = {
+    1200, 2400, 4800, 9600, 19200, 43000, 76800,
+    115200, 128000, 230400, 256000, 460800, 921600};
 
 static void append_wireless_uart_text(const char *text, bool add_newline)
 {
@@ -149,6 +152,34 @@ static size_t read_serial_chunk(char *buffer, size_t buffer_size)
   }
   buffer[count] = '\0';
   return count;
+}
+
+static long get_selected_baud_rate(lv_obj_t *dropdown)
+{
+  if (!dropdown)
+  {
+    return currentBaudRate;
+  }
+
+  uint16_t selected_index = lv_dropdown_get_selected(dropdown);
+  size_t baud_count = sizeof(kSupportedBaudRates) / sizeof(kSupportedBaudRates[0]);
+  if (selected_index >= baud_count)
+  {
+    selected_index = 7;
+  }
+
+  return kSupportedBaudRates[selected_index];
+}
+
+static void update_serial_baud_rate(lv_obj_t *dropdown)
+{
+  long newBaudRate = get_selected_baud_rate(dropdown);
+  if (newBaudRate != currentBaudRate)
+  {
+    Serial.end();
+    Serial.begin(newBaudRate);
+    currentBaudRate = newBaudRate;
+  }
 }
 
 class MyServerCallbacks : public BLEServerCallbacks // BLE连接回调函数
@@ -320,7 +351,7 @@ void pwm_task() // pwm输出任务
     pwm_Duty = constrain(atoi(duty_str), 0, 100); // 限制占空比在 0-100 之间
     pwm_Duty = map(pwm_Duty, 0, 100, 0, 255);
 
-    if (pwm_Freq != new_pwm_Freq | pwm_Duty != new_pwm_Duty)
+    if (pwm_Freq != new_pwm_Freq || pwm_Duty != new_pwm_Duty)
     {
       ledcAttachPin(5, 2);       // 将引脚连接到通道2
       ledcSetup(2, pwm_Freq, 8); // 设置通道2为8位分辨率
@@ -387,69 +418,7 @@ void uart_helper_task() // 串口助手任务
 
   if (uart_helper_flag == 1)
   {
-
-    char buf[10];
-    lv_dropdown_get_selected_str(uart_list, buf, sizeof(buf));
-    long newBaudRate = 0;
-
-    if (strcmp(buf, "1200") == 0)
-    {
-      newBaudRate = 1200;
-    }
-    else if (strcmp(buf, "2400") == 0)
-    {
-      newBaudRate = 2400;
-    }
-    else if (strcmp(buf, "4800") == 0)
-    {
-      newBaudRate = 4800;
-    }
-    else if (strcmp(buf, "9600") == 0)
-    {
-      newBaudRate = 9600;
-    }
-    else if (strcmp(buf, "19200") == 0)
-    {
-      newBaudRate = 19200;
-    }
-    else if (strcmp(buf, "43000") == 0)
-    {
-      newBaudRate = 43000;
-    }
-    else if (strcmp(buf, "76800") == 0)
-    {
-      newBaudRate = 76800;
-    }
-    else if (strcmp(buf, "115200") == 0)
-    {
-      newBaudRate = 115200;
-    }
-    else if (strcmp(buf, "128000") == 0)
-    {
-      newBaudRate = 128000;
-    }
-    else if (strcmp(buf, "230400") == 0)
-    {
-      newBaudRate = 230400;
-    }
-    else if (strcmp(buf, "256000") == 0)
-    {
-      newBaudRate = 256000;
-    }
-    else if (strcmp(buf, "460800") == 0)
-    {
-      newBaudRate = 460800;
-    }
-    else if (strcmp(buf, "921600") == 0)
-    {
-      newBaudRate = 921600;
-    }
-    if (newBaudRate != currentBaudRate)
-    {
-      Serial.end();                  // 结束当前串口
-      Serial.begin(newBaudRate);     // 以新波特率开始串口
-      currentBaudRate = newBaudRate; // 更新当前波特率
-    }
+    update_serial_baud_rate(uart_list);
     size_t bytes_read = read_serial_chunk(uart_rx_chunk, sizeof(uart_rx_chunk));
     if (bytes_read > 0)
     {
@@ -469,7 +438,7 @@ void DSO_task() // 简易示波器任务
       lv_chart_set_next_value(DSO_chart, DSO_ser, adcValues[i]);
     }
 
-    float maxValue;
+    float maxValue = 0;
     float minValue = 4095;
     float peakToPeakValue;
 
@@ -660,68 +629,7 @@ void BluetoothSerial_task() // 无线串口任务（基于BLE实现）
   }
   if (BluetoothSerial_flag == 2)
   {
-    char buf[10];
-    lv_dropdown_get_selected_str(wireless_uart_list, buf, sizeof(buf));
-    long newBaudRate = 0;
-
-    if (strcmp(buf, "1200") == 0)
-    {
-      newBaudRate = 1200;
-    }
-    else if (strcmp(buf, "2400") == 0)
-    {
-      newBaudRate = 2400;
-    }
-    else if (strcmp(buf, "4800") == 0)
-    {
-      newBaudRate = 4800;
-    }
-    else if (strcmp(buf, "9600") == 0)
-    {
-      newBaudRate = 9600;
-    }
-    else if (strcmp(buf, "19200") == 0)
-    {
-      newBaudRate = 19200;
-    }
-    else if (strcmp(buf, "43000") == 0)
-    {
-      newBaudRate = 43000;
-    }
-    else if (strcmp(buf, "76800") == 0)
-    {
-      newBaudRate = 76800;
-    }
-    else if (strcmp(buf, "115200") == 0)
-    {
-      newBaudRate = 115200;
-    }
-    else if (strcmp(buf, "128000") == 0)
-    {
-      newBaudRate = 128000;
-    }
-    else if (strcmp(buf, "230400") == 0)
-    {
-      newBaudRate = 230400;
-    }
-    else if (strcmp(buf, "256000") == 0)
-    {
-      newBaudRate = 256000;
-    }
-    else if (strcmp(buf, "460800") == 0)
-    {
-      newBaudRate = 460800;
-    }
-    else if (strcmp(buf, "921600") == 0)
-    {
-      newBaudRate = 921600;
-    }
-    if (newBaudRate != currentBaudRate)
-    {
-      Serial.end();                  // 结束当前串口
-      Serial.begin(newBaudRate);     // 以新波特率开始串口
-      currentBaudRate = newBaudRate; // 更新当前波特率
-    }
+    update_serial_baud_rate(wireless_uart_list);
 
     if (deviceConnected) // 连接时执行串口转发
     {
