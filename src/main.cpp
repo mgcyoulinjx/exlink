@@ -96,6 +96,27 @@ BLECharacteristic *pRxCharacteristic; // BLECharacteristic指针 pRxCharacterist
 bool deviceConnected = false;         // 本次连接状态
 bool oldDeviceConnected = false;      // 上次连接状态
 uint8_t txValue = 0;
+static char pending_ble_rx_text[256];
+static volatile size_t pending_ble_rx_len = 0;
+
+static void append_wireless_uart_text(const char *text, bool add_newline)
+{
+  if (!wireless_uart_extarea || !text)
+  {
+    return;
+  }
+
+  if (strlen(lv_textarea_get_text(wireless_uart_extarea)) > 768)
+  {
+    lv_textarea_set_text(wireless_uart_extarea, "");
+  }
+
+  lv_textarea_add_text(wireless_uart_extarea, text);
+  if (add_newline)
+  {
+    lv_textarea_add_text(wireless_uart_extarea, "\n");
+  }
+}
 
 class MyServerCallbacks : public BLEServerCallbacks // BLE连接回调函数
 {
@@ -118,11 +139,18 @@ class MyCallbacks : public BLECharacteristicCallbacks // BLE接收回调函数
 
     if (rxValue.length() > 0)
     {
+      Serial.write((const uint8_t *)rxValue.data(), rxValue.length());
 
-      for (int i = 0; i < rxValue.length(); i++)
+      size_t copy_len = rxValue.length();
+      if (copy_len > sizeof(pending_ble_rx_text) - 2)
       {
-        Serial.println(rxValue[i]);
+        copy_len = sizeof(pending_ble_rx_text) - 2;
       }
+
+      memcpy(pending_ble_rx_text, rxValue.data(), copy_len);
+      pending_ble_rx_text[copy_len] = '\n';
+      pending_ble_rx_text[copy_len + 1] = '\0';
+      pending_ble_rx_len = copy_len + 1;
     }
   }
 };
@@ -651,12 +679,19 @@ void BluetoothSerial_task() // 无线串口任务（基于BLE实现）
 
     if (deviceConnected) // 连接时执行串口转发
     {
+      if (pending_ble_rx_len > 0)
+      {
+        append_wireless_uart_text(pending_ble_rx_text, false);
+        pending_ble_rx_len = 0;
+        pending_ble_rx_text[0] = '\0';
+      }
+
       if (Serial.available() > 0)
       {
         String strValue = Serial.readStringUntil('\n');
         pTxCharacteristic->setValue((uint8_t *)strValue.c_str(), strValue.length());
         pTxCharacteristic->notify();
-        lv_textarea_add_text(wireless_uart_extarea, strValue.c_str());
+        append_wireless_uart_text(strValue.c_str(), true);
         delay(100);
       }
     }
