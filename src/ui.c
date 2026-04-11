@@ -1788,6 +1788,19 @@ void DSO_init(void)
     configure_swipe_back_for_current_screen(true);
 }
 
+static void wireless_uart_clear_event_cb(lv_event_t *e)
+{
+    if (lv_event_get_code(e) != LV_EVENT_CLICKED)
+    {
+        return;
+    }
+
+    if (wireless_uart_extarea)
+    {
+        lv_textarea_set_text(wireless_uart_extarea, "");
+    }
+}
+
 void wirelessuart_init(void)
 {
 
@@ -1885,6 +1898,7 @@ void wirelessuart_init(void)
     wireless_uart_extarea = lv_textarea_create(lv_scr_act());
     lv_obj_set_size(wireless_uart_extarea, 269, 120);
     lv_obj_set_pos(wireless_uart_extarea, 6, 75);
+    lv_textarea_set_max_length(wireless_uart_extarea, 1024);
     lv_textarea_set_placeholder_text(wireless_uart_extarea, "Use '\\n' as the end of the usart information");
 
     static lv_style_t wireless_uart_style;
@@ -1903,6 +1917,19 @@ void wirelessuart_init(void)
     lv_obj_align(wireless_uart_btn_label, LV_ALIGN_CENTER, 0, 0);
     lv_label_set_text(wireless_uart_btn_label, "OPEN");
     lv_obj_set_style_text_font(wireless_uart_btn_label, &lv_font_montserrat_20, 0);
+
+    lv_obj_t *wireless_uart_clear_btn = lv_btn_create(lv_scr_act());
+    lv_obj_set_size(wireless_uart_clear_btn, 65, 52);
+    lv_obj_set_pos(wireless_uart_clear_btn, 30, 20);
+    lv_obj_set_style_bg_color(wireless_uart_clear_btn, lv_color_hex(0x696969), 0);
+    lv_obj_set_style_border_color(wireless_uart_clear_btn, lv_color_hex(0x000000), 0);
+    lv_obj_set_style_border_width(wireless_uart_clear_btn, 2, 0);
+    lv_obj_add_event_cb(wireless_uart_clear_btn, wireless_uart_clear_event_cb, LV_EVENT_CLICKED, NULL);
+    lv_obj_t *wireless_uart_clear_label = lv_label_create(wireless_uart_clear_btn);
+    lv_obj_set_style_text_color(wireless_uart_clear_label, lv_color_hex(0xFFFFFF), 0);
+    lv_obj_align(wireless_uart_clear_label, LV_ALIGN_CENTER, 0, 0);
+    lv_label_set_text(wireless_uart_clear_label, "CLEAR");
+    lv_obj_set_style_text_font(wireless_uart_clear_label, &lv_font_montserrat_16, 0);
 
     configure_swipe_back_for_current_screen(true);
 }
