@@ -264,12 +264,12 @@ void poweronbtn_event_cb(lv_event_t *e)
         if (enabled)
         {
             digitalWrite(1, HIGH);
-            lv_obj_set_style_text_color(poweron_label, lv_color_hex(0x00FF7F), 0);
+            lv_obj_set_style_text_color(poweron_label, lv_color_hex(0x17803D), 0);
         }
         else
         {
             digitalWrite(1, LOW);
-            lv_obj_set_style_text_color(poweron_label, lv_color_hex(0xFF0000), 0);
+            lv_obj_set_style_text_color(poweron_label, lv_color_hex(0xC62828), 0);
         }
     }
 }
@@ -282,11 +282,11 @@ void pwm_btn_event_cb(lv_event_t *e)
         pwm_flag = pwm_flag ? 0 : 1;
         if (pwm_flag)
         {
-            lv_obj_set_style_bg_color(pwm_btn, lv_color_hex(0x00FF7F), 0);
+            lv_obj_set_style_bg_color(pwm_btn, lv_color_hex(0x16C47F), 0);
         }
         else
         {
-            lv_obj_set_style_bg_color(pwm_btn, lv_color_hex(0xFF0000), 0);
+            lv_obj_set_style_bg_color(pwm_btn, lv_color_hex(0xFF7A00), 0);
         }
     }
 }
@@ -299,11 +299,15 @@ void i2conbtn_event_cb(lv_event_t *e)
         i2cscan_flag = i2cscan_flag ? 0 : 1;
         if (i2cscan_flag)
         {
-            lv_obj_set_style_bg_color(i2con, lv_color_hex(0x00FF7F), 0);
+            extern bool i2cscan_requested;
+            i2cscan_requested = true;
+            lv_obj_set_style_bg_color(i2con, lv_color_hex(0x16C47F), 0);
         }
         else
         {
-            lv_obj_set_style_bg_color(i2con, lv_color_hex(0xFF0000), 0);
+            extern bool i2cscan_requested;
+            i2cscan_requested = false;
+            lv_obj_set_style_bg_color(i2con, lv_color_hex(0xFF7A00), 0);
         }
     }
 }
@@ -316,11 +320,11 @@ void uart_btn_event_cb(lv_event_t *e)
         uart_helper_flag = uart_helper_flag ? 0 : 1;
         if (uart_helper_flag)
         {
-            lv_obj_set_style_bg_color(uart_btn, lv_color_hex(0x00FF7F), 0);
+            lv_obj_set_style_bg_color(uart_btn, lv_color_hex(0x16C47F), 0);
         }
         else
         {
-            lv_obj_set_style_bg_color(uart_btn, lv_color_hex(0xFF0000), 0);
+            lv_obj_set_style_bg_color(uart_btn, lv_color_hex(0xFF7A00), 0);
         }
     }
 }
@@ -333,11 +337,11 @@ void wireless_uart_btn_event_cb(lv_event_t *e)
         BluetoothSerial_flag = BluetoothSerial_flag ? 0 : 1;
         if (BluetoothSerial_flag)
         {
-            lv_obj_set_style_bg_color(wireless_uart_btn, lv_color_hex(0x00FF7F), 0);
+            lv_obj_set_style_bg_color(wireless_uart_btn, lv_color_hex(0x16C47F), 0);
         }
         else
         {
-            lv_obj_set_style_bg_color(wireless_uart_btn, lv_color_hex(0xFF0000), 0);
+            lv_obj_set_style_bg_color(wireless_uart_btn, lv_color_hex(0xFF7A00), 0);
         }
     }
 }

@@ -78,6 +78,20 @@ int new_pwm_Duty = 0;
 int mcp4107_value;
 long currentBaudRate = 115200; // 定义初始波特率
 lv_indev_t *indev_keypad;
+bool i2cscan_requested = false;
+
+static void sync_i2c_scan_button_visual()
+{
+  if (i2con == nullptr)
+  {
+    return;
+  }
+
+  lv_obj_set_style_bg_color(
+      i2con,
+      lv_color_hex(i2cscan_flag ? 0x16C47F : 0xFF7A00),
+      0);
+}
 byte error, address;
 int nDevices;
 // 在这里设置屏幕尺寸
@@ -371,15 +385,20 @@ void pwm_task() // pwm输出任务
 
 void i2cscan_task() // I2C扫描任务
 {
-  if (i2cscan_flag == 1)
+  if (i2cscan_flag == 1 && i2cscan_requested)
   {
-
     Wire.begin(6, 7);
     lv_textarea_add_text(i2c_extarea, "Scanning...\n");
 
     nDevices = 0;
     for (address = 1; address < 127; address++)
     {
+      if (i2cscan_flag == 0)
+      {
+        lv_textarea_add_text(i2c_extarea, "Scan cancelled\n");
+        break;
+      }
+
       Wire1.begin(6, 7);
       Wire1.beginTransmission(address); // 从指定的地址开始向I2C从设备进行传输
       error = Wire1.endTransmission();  // 停止与从机的数据传输
@@ -409,7 +428,8 @@ void i2cscan_task() // I2C扫描任务
     else
       lv_textarea_add_text(i2c_extarea, "done\n");
 
-    i2cscan_flag = 0;
+    i2cscan_requested = false;
+    sync_i2c_scan_button_visual();
   }
 }
 

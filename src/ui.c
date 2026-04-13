@@ -78,6 +78,87 @@ lv_style_t style_rect;
 
 extern double v, a, w;
 
+#define UI_COLOR_BG 0xFFF7E8
+#define UI_COLOR_PANEL 0xFFFDF6
+#define UI_COLOR_CARD 0xFFFFFF
+#define UI_COLOR_PRIMARY 0xFF7A00
+#define UI_COLOR_PRIMARY_SOFT 0xFFD39A
+#define UI_COLOR_SECONDARY 0x16C47F
+#define UI_COLOR_SECONDARY_SOFT 0xB8F5D1
+#define UI_COLOR_ACCENT 0x2F89FC
+#define UI_COLOR_ACCENT_SOFT 0xB9DDFF
+#define UI_COLOR_BORDER 0xFFB347
+#define UI_COLOR_TEXT 0x2D2A26
+#define UI_COLOR_MUTED 0x7B6F66
+#define UI_COLOR_TEXT_WARM 0xA84B00
+#define UI_COLOR_TEXT_COOL 0x006D77
+#define UI_COLOR_TEXT_BLUE 0x1D4ED8
+#define UI_COLOR_TEXT_GREEN 0x17803D
+#define UI_COLOR_TEXT_RED 0xC62828
+
+static void apply_page_bg(void)
+{
+    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(UI_COLOR_BG), 0);
+    lv_obj_set_style_text_color(lv_scr_act(), lv_color_hex(UI_COLOR_TEXT), 0);
+}
+
+static void style_input_surface(lv_obj_t *obj)
+{
+    if (!obj) return;
+    lv_obj_set_style_bg_color(obj, lv_color_hex(UI_COLOR_CARD), LV_PART_MAIN);
+    lv_obj_set_style_text_color(obj, lv_color_hex(UI_COLOR_TEXT), LV_PART_MAIN);
+    lv_obj_set_style_text_color(obj, lv_color_hex(UI_COLOR_TEXT), LV_PART_ITEMS);
+    lv_obj_set_style_border_color(obj, lv_color_hex(UI_COLOR_BORDER), LV_PART_MAIN);
+    lv_obj_set_style_border_width(obj, 2, LV_PART_MAIN);
+    lv_obj_set_style_radius(obj, 12, LV_PART_MAIN);
+}
+
+static void style_chart_surface(lv_obj_t *obj)
+{
+    if (!obj) return;
+    lv_obj_set_style_bg_color(obj, lv_color_hex(UI_COLOR_CARD), LV_PART_MAIN);
+    lv_obj_set_style_line_color(obj, lv_color_hex(UI_COLOR_PRIMARY_SOFT), LV_PART_MAIN);
+    lv_obj_set_style_border_color(obj, lv_color_hex(UI_COLOR_BORDER), LV_PART_MAIN);
+    lv_obj_set_style_border_width(obj, 2, LV_PART_MAIN);
+    lv_obj_set_style_radius(obj, 18, LV_PART_MAIN);
+}
+
+static void style_menu_icon(lv_obj_t *obj, uint32_t color)
+{
+    if (!obj) return;
+    lv_obj_set_style_bg_opa(obj, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN);
+    lv_obj_set_style_shadow_width(obj, 0, LV_PART_MAIN);
+    lv_obj_set_style_img_recolor(obj, lv_color_hex(color), LV_PART_MAIN);
+    lv_obj_set_style_img_recolor_opa(obj, LV_OPA_90, LV_PART_MAIN);
+}
+
+static lv_obj_t *create_menu_icon_badge(lv_obj_t *parent, uint32_t color, lv_coord_t x_ofs)
+{
+    (void)x_ofs;
+    lv_obj_t *badge = lv_obj_create(parent);
+    lv_obj_remove_style_all(badge);
+    lv_obj_set_size(badge, 52, 52);
+    lv_obj_set_style_radius(badge, 18, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(badge, lv_color_hex(color), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(badge, LV_OPA_20, LV_PART_MAIN);
+    lv_obj_set_style_border_width(badge, 0, LV_PART_MAIN);
+    lv_obj_set_style_shadow_width(badge, 0, LV_PART_MAIN);
+    lv_obj_align(badge, LV_ALIGN_RIGHT_MID, -6, 0);
+    lv_obj_move_background(badge);
+    return badge;
+}
+
+static void style_menu_entry_label(lv_obj_t *label, const lv_font_t *font)
+{
+    if (!label) return;
+    lv_obj_align(label, LV_ALIGN_LEFT_MID, 4, 0);
+    lv_obj_set_width(label, 114);
+    lv_obj_set_style_text_color(label, lv_color_hex(UI_COLOR_TEXT), 0);
+    lv_obj_set_style_text_font(label, font, 0);
+    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_LEFT, 0);
+}
+
 void update_label_timer1(lv_timer_t *timer)
 {
     lv_obj_t *voltmeter_label1 = (lv_obj_t *)timer->user_data;
@@ -312,77 +393,192 @@ void add_data2(lv_timer_t *timer)
 // 创建启动动画
 void create_boot_animation(void)
 {
-    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
-    ui_Image1 = lv_img_create(lv_scr_act());
-    lv_img_set_src(ui_Image1, &ui_img_game3_png);
-    lv_obj_set_width(ui_Image1, LV_SIZE_CONTENT);
-    lv_obj_set_height(ui_Image1, LV_SIZE_CONTENT);
-    lv_obj_set_pos(ui_Image1, 45, 50);
-    lv_obj_add_flag(ui_Image1, LV_OBJ_FLAG_ADV_HITTEST);
+    apply_page_bg();
+    lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
+    const lv_coord_t screen_w = lv_obj_get_width(lv_scr_act());
+    const lv_coord_t screen_h = lv_obj_get_height(lv_scr_act());
+    const lv_coord_t card_w = 220;
+    const lv_coord_t card_h = 156;
+    const lv_coord_t card_x = (screen_w - card_w) / 2;
+    const lv_coord_t startup_group_h = 220;
+    const lv_coord_t card_y = (screen_h - startup_group_h) / 2;
+    const lv_coord_t line_y = card_y + card_h + 14;
+    const lv_coord_t loading_y = line_y + 20;
+
+    ui_Image1 = lv_obj_create(lv_scr_act());
+    lv_obj_remove_style(ui_Image1, 0, LV_PART_SCROLLBAR);
+    lv_obj_set_size(ui_Image1, card_w, card_h);
+    lv_obj_set_pos(ui_Image1, card_x, card_y);
+    lv_obj_set_style_radius(ui_Image1, 28, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(ui_Image1, lv_color_hex(UI_COLOR_CARD), LV_PART_MAIN);
+    lv_obj_set_style_border_color(ui_Image1, lv_color_hex(UI_COLOR_PRIMARY_SOFT), LV_PART_MAIN);
+    lv_obj_set_style_border_width(ui_Image1, 3, LV_PART_MAIN);
+    lv_obj_set_style_shadow_width(ui_Image1, 0, LV_PART_MAIN);
     lv_obj_clear_flag(ui_Image1, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_scroll_dir(ui_Image1, LV_DIR_NONE);
 
-    // 初始化动画
-    lv_anim_t anim1;
-    lv_anim_init(&anim1);                                // 初始化动画结构体
-    lv_anim_set_exec_cb(&anim1, anim_cb1);               // 设置动画回调函数
-    lv_anim_set_var(&anim1, ui_Image1);                  // 设置动画作用的对象
-    lv_anim_set_time(&anim1, 450);                       // 设置动画时间
-    lv_anim_set_values(&anim1, 12, 60);                  // 设置运动轨迹
-    lv_anim_set_path_cb(&anim1, lv_anim_path_overshoot); // 使用“overshoot”路径效果，使动画更加生动
+    lv_obj_t *accent_bar = lv_obj_create(ui_Image1);
+    lv_obj_remove_style_all(accent_bar);
+    lv_obj_set_size(accent_bar, 146, 6);
+    lv_obj_align(accent_bar, LV_ALIGN_TOP_MID, 0, 16);
+    lv_obj_set_style_radius(accent_bar, 6, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(accent_bar, lv_color_hex(UI_COLOR_PRIMARY), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(accent_bar, LV_OPA_100, LV_PART_MAIN);
 
-    lv_obj_t *line = lv_line_create(lv_scr_act());
+    lv_obj_t *hero_header = lv_obj_create(ui_Image1);
+    lv_obj_remove_style_all(hero_header);
+    lv_obj_set_size(hero_header, 184, 56);
+    lv_obj_align(hero_header, LV_ALIGN_TOP_MID, 0, 34);
 
-    // 设置线条的起始和结束点
-    static lv_point_t points[] = {{LINE_X1, LINE_Y1}, {LINE_X2, LINE_Y2}};
-    lv_line_set_points(line, points, 2);
+    lv_obj_t *hero_badge = lv_obj_create(hero_header);
+    lv_obj_remove_style_all(hero_badge);
+    lv_obj_set_size(hero_badge, 58, 58);
+    lv_obj_align(hero_badge, LV_ALIGN_LEFT_MID, 0, 0);
+    lv_obj_set_style_radius(hero_badge, 18, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(hero_badge, lv_color_hex(0x5B6CFF), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(hero_badge, LV_OPA_30, LV_PART_MAIN);
 
-    // 设置线条的样式
-    lv_obj_set_style_line_width(line, 10, 0);
-    lv_obj_set_style_line_color(line, lv_color_hex(0xFF0000), 0); // 红色
-    lv_obj_set_style_line_rounded(line, true, LV_PART_MAIN);
-    lv_anim_t anim2;
-    lv_anim_init(&anim2);                                      // 初始化动画结构体
-    lv_anim_set_var(&anim2, line);                             // 设置动画作用的对象
-    lv_anim_set_exec_cb(&anim2, (lv_anim_exec_xcb_t)anim_cb2); // 设置动画回调函数
-    lv_anim_set_values(&anim2, -100, 15);                      // 设置运动轨迹
-    lv_anim_set_time(&anim2, 450);                             // 设置动画时间
-    lv_anim_set_path_cb(&anim2, lv_anim_path_overshoot);       // 动画路径效果
+    lv_obj_t *hero_badge_icon = lv_img_create(hero_badge);
+    lv_img_set_src(hero_badge_icon, &readme_png);
+    lv_img_set_zoom(hero_badge_icon, 205);
+    lv_obj_center(hero_badge_icon);
+    style_menu_icon(hero_badge_icon, 0x5B6CFF);
 
-    ui_Image2 = lv_img_create(lv_scr_act());
-    lv_img_set_src(ui_Image2, &Exlink_png);
-    lv_obj_set_width(ui_Image2, LV_SIZE_CONTENT);
-    lv_obj_set_height(ui_Image2, LV_SIZE_CONTENT);
-    lv_obj_set_pos(ui_Image2, 35, 150);
-    lv_obj_add_flag(ui_Image2, LV_OBJ_FLAG_ADV_HITTEST);
+    lv_obj_t *hero_title_wrap = lv_obj_create(hero_header);
+    lv_obj_remove_style_all(hero_title_wrap);
+    lv_obj_set_size(hero_title_wrap, 118, 42);
+    lv_obj_align_to(hero_title_wrap, hero_badge, LV_ALIGN_OUT_RIGHT_MID, 12, 0);
+
+    lv_obj_t *hero_title = lv_label_create(hero_title_wrap);
+    lv_label_set_text(hero_title, "Exlink Tool");
+    lv_obj_set_style_text_color(hero_title, lv_color_hex(UI_COLOR_TEXT_RED), 0);
+    lv_obj_set_style_text_font(hero_title, &lv_font_montserrat_20, 0);
+    lv_obj_align(hero_title, LV_ALIGN_TOP_MID, 0, 0);
+
+    lv_obj_t *hero_sub = lv_label_create(hero_title_wrap);
+    lv_label_set_text(hero_sub, "Bright Edition");
+    lv_obj_set_style_text_color(hero_sub, lv_color_hex(UI_COLOR_TEXT_BLUE), 0);
+    lv_obj_set_style_text_font(hero_sub, &lv_font_montserrat_14, 0);
+    lv_obj_align(hero_sub, LV_ALIGN_BOTTOM_MID, 0, 0);
+
+    lv_obj_t *boot_info = lv_obj_create(ui_Image1);
+    lv_obj_remove_style(boot_info, 0, LV_PART_SCROLLBAR);
+    lv_obj_set_size(boot_info, 184, 44);
+    lv_obj_align(boot_info, LV_ALIGN_BOTTOM_MID, 0, -18);
+    lv_obj_set_style_radius(boot_info, 16, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(boot_info, lv_color_hex(UI_COLOR_BG), LV_PART_MAIN);
+    lv_obj_set_style_border_color(boot_info, lv_color_hex(UI_COLOR_ACCENT_SOFT), LV_PART_MAIN);
+    lv_obj_set_style_border_width(boot_info, 2, LV_PART_MAIN);
+    lv_obj_set_style_shadow_width(boot_info, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(boot_info, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_scroll_dir(boot_info, LV_DIR_NONE);
+
+    lv_obj_t *boot_info_text = lv_label_create(boot_info);
+    lv_label_set_text(boot_info_text, "Portable bright toolkit\nfor Exlink 0603");
+    lv_obj_set_style_text_color(boot_info_text, lv_color_hex(UI_COLOR_MUTED), 0);
+    lv_obj_set_style_text_font(boot_info_text, &lv_font_montserrat_12, 0);
+    lv_obj_set_style_text_align(boot_info_text, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_center(boot_info_text);
+
+    lv_obj_t *line = lv_obj_create(lv_scr_act());
+    lv_obj_remove_style_all(line);
+    lv_obj_set_size(line, 156, 8);
+    lv_obj_set_pos(line, (screen_w - 156) / 2, line_y);
+    lv_obj_set_style_radius(line, 8, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(line, lv_color_hex(UI_COLOR_PRIMARY_SOFT), LV_PART_MAIN);
+
+    lv_obj_t *line_fill = lv_obj_create(line);
+    lv_obj_remove_style_all(line_fill);
+    lv_obj_set_size(line_fill, 52, 8);
+    lv_obj_align(line_fill, LV_ALIGN_LEFT_MID, 0, 0);
+    lv_obj_set_style_radius(line_fill, 8, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(line_fill, lv_color_hex(UI_COLOR_PRIMARY), LV_PART_MAIN);
+
+    ui_Image2 = lv_label_create(lv_scr_act());
+    lv_label_set_text(ui_Image2, "Loading workspace...");
+    lv_obj_set_style_text_color(ui_Image2, lv_color_hex(UI_COLOR_TEXT_COOL), 0);
+    lv_obj_set_style_text_font(ui_Image2, &lv_font_montserrat_16, 0);
     lv_obj_clear_flag(ui_Image2, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_align_to(ui_Image2, line, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
+
+    lv_obj_t *done_anchor = lv_obj_create(lv_scr_act());
+    lv_obj_remove_style_all(done_anchor);
+    lv_obj_set_size(done_anchor, 1, 1);
+    lv_obj_set_pos(done_anchor, 0, 0);
+
+    lv_anim_t anim1;
+    lv_anim_init(&anim1);
+    lv_anim_set_exec_cb(&anim1, anim_cb2);
+    lv_anim_set_var(&anim1, ui_Image1);
+    lv_anim_set_time(&anim1, 450);
+    lv_anim_set_values(&anim1, -180, card_y);
+    lv_anim_set_path_cb(&anim1, lv_anim_path_overshoot);
+
+    lv_anim_t anim2;
+    lv_anim_init(&anim2);
+    lv_anim_set_exec_cb(&anim2, anim_cb1);
+    lv_anim_set_var(&anim2, accent_bar);
+    lv_anim_set_time(&anim2, 380);
+    lv_anim_set_values(&anim1, 220, 30);
+    lv_anim_set_path_cb(&anim2, lv_anim_path_overshoot);
+
     lv_anim_t anim3;
-    lv_anim_init(&anim3);                                      // 初始化动画结构体
-    lv_anim_set_var(&anim3, ui_Image2);                        // 设置动画作用的对象
-    lv_anim_set_exec_cb(&anim3, (lv_anim_exec_xcb_t)anim_cb2); // 设置动画回调函数
-    lv_anim_set_values(&anim3, 240, 150);                      // 设置运动轨迹
-    lv_anim_set_time(&anim3, 450);                             // 动画时间
-    lv_anim_set_path_cb(&anim3, lv_anim_path_overshoot);       // 动画路径效果
+    lv_anim_init(&anim3);
+    lv_anim_set_exec_cb(&anim3, anim_cb1);
+    lv_anim_set_var(&anim3, hero_badge);
+    lv_anim_set_time(&anim3, 380);
+    lv_anim_set_values(&anim3, -80, 0);
+    lv_anim_set_path_cb(&anim3, lv_anim_path_overshoot);
 
-    lv_obj_t *label = lv_label_create(lv_scr_act()); /* 创建标签 */
-    lv_label_set_text(label, "");                    /* 设置文本内容 */
-    lv_obj_align(label, LV_ALIGN_TOP_LEFT, 0, 0);    /* 设置位置 */
     lv_anim_t anim4;
-    lv_anim_init(&anim4);           // 初始化动画结构体
-    lv_anim_set_var(&anim4, label); // 设置动画作用的对象
-    lv_anim_set_ready_cb(&anim4, anim_end_callback);
-    lv_anim_set_exec_cb(&anim4, (lv_anim_exec_xcb_t)anim_cb2); // 设置动画回调函数
-    lv_anim_set_values(&anim4, 30, 30);                        // 设置动画轨迹
-    lv_anim_set_time(&anim4, 2000);                            // 设置动画时间为 2000 毫秒
-    lv_anim_set_path_cb(&anim4, lv_anim_path_overshoot);       // 动画路径效果
-    // lv_anim_start(&anim2); // 启动动画
+    lv_anim_init(&anim4);
+    lv_anim_set_exec_cb(&anim4, anim_cb1);
+    lv_anim_set_var(&anim4, hero_title_wrap);
+    lv_anim_set_time(&anim4, 380);
+    lv_anim_set_values(&anim4, 180, 64);
+    lv_anim_set_path_cb(&anim4, lv_anim_path_overshoot);
 
-    // 设置动画时间线
+    lv_anim_t anim6;
+    lv_anim_init(&anim6);
+    lv_anim_set_exec_cb(&anim6, anim_cb2);
+    lv_anim_set_var(&anim6, boot_info);
+    lv_anim_set_time(&anim6, 420);
+    lv_anim_set_values(&anim6, 160, 94);
+    lv_anim_set_path_cb(&anim6, lv_anim_path_overshoot);
+
+    lv_anim_t anim7;
+    lv_anim_init(&anim7);
+    lv_anim_set_exec_cb(&anim7, anim_cb2);
+    lv_anim_set_var(&anim7, line);
+    lv_anim_set_time(&anim7, 360);
+    lv_anim_set_values(&anim7, screen_h + 24, line_y);
+    lv_anim_set_path_cb(&anim7, lv_anim_path_overshoot);
+
+    lv_anim_t anim8;
+    lv_anim_init(&anim8);
+    lv_anim_set_exec_cb(&anim8, anim_cb2);
+    lv_anim_set_var(&anim8, ui_Image2);
+    lv_anim_set_time(&anim8, 360);
+    lv_anim_set_values(&anim8, screen_h + 48, loading_y);
+    lv_anim_set_path_cb(&anim8, lv_anim_path_overshoot);
+
+    lv_anim_t anim9;
+    lv_anim_init(&anim9);
+    lv_anim_set_var(&anim9, done_anchor);
+    lv_anim_set_ready_cb(&anim9, anim_end_callback);
+    lv_anim_set_exec_cb(&anim9, anim_cb2);
+    lv_anim_set_time(&anim9, 2000);
+    lv_anim_set_values(&anim9, 0, 0);
+
     lv_anim_timeline_t *anim_timeline = lv_anim_timeline_create();
     lv_anim_timeline_add(anim_timeline, 0, &anim1);
-    lv_anim_timeline_add(anim_timeline, 150, &anim2);
-    lv_anim_timeline_add(anim_timeline, 200, &anim3);
-    lv_anim_timeline_add(anim_timeline, 200, &anim4);
-    // 启动动画时间线
+    lv_anim_timeline_add(anim_timeline, 90, &anim2);
+    lv_anim_timeline_add(anim_timeline, 130, &anim3);
+    lv_anim_timeline_add(anim_timeline, 150, &anim4);
+    lv_anim_timeline_add(anim_timeline, 180, &anim6);
+    lv_anim_timeline_add(anim_timeline, 230, &anim7);
+    lv_anim_timeline_add(anim_timeline, 270, &anim8);
+    lv_anim_timeline_add(anim_timeline, 310, &anim9);
     lv_anim_timeline_start(anim_timeline);
 }
 
@@ -390,13 +586,14 @@ void ui_Screen1_screen_init(void) // 创建主界面
 {
     lv_obj_clean(lv_scr_act());
     set_swipe_back_enabled(true);
-    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
+    apply_page_bg();
     lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
 
     panel = lv_obj_create(lv_scr_act());
     lv_obj_set_size(panel, 230, 240);
     lv_obj_set_pos(panel, 5, 0);
-    lv_obj_set_style_bg_color(panel, lv_color_hex(0x000000), 0);
+    lv_obj_set_style_bg_color(panel, lv_color_hex(UI_COLOR_PANEL), 0);
+    lv_obj_set_style_text_color(panel, lv_color_hex(UI_COLOR_TEXT), 0);
     lv_obj_set_style_anim_time(panel, 0, 0);
     lv_obj_set_style_border_width(panel, 0, 0);
     lv_obj_remove_style(panel, 0, LV_PART_SCROLLBAR);
@@ -406,15 +603,16 @@ void ui_Screen1_screen_init(void) // 创建主界面
 
     lv_style_init(&style_rect);
     // 设置边框的颜色和粗细
-    lv_style_set_border_color(&style_rect, lv_color_hex(0xFF0000)); // 红色边框
+    lv_style_set_border_color(&style_rect, lv_color_hex(UI_COLOR_BORDER));
     lv_style_set_border_width(&style_rect, 3);                      // 5 像素粗细
-    lv_style_set_bg_color(&style_rect, lv_color_hex(0x000000));     // 白色背景
+    lv_style_set_bg_color(&style_rect, lv_color_hex(UI_COLOR_CARD));
+    lv_style_set_text_color(&style_rect, lv_color_hex(UI_COLOR_TEXT));
     lv_style_set_radius(&style_rect, 20);                           // 圆角半径
 
     // 设置聚焦状的边框
     static lv_style_t focused_style;
     lv_style_init(&focused_style);
-    lv_style_set_border_color(&focused_style, lv_color_hex(0xFFD700));
+    lv_style_set_border_color(&focused_style, lv_color_hex(UI_COLOR_PRIMARY));
     lv_style_set_border_width(&focused_style, 5);
 
     btn1 = lv_btn_create(panel);
@@ -424,13 +622,15 @@ void ui_Screen1_screen_init(void) // 创建主界面
     lv_obj_add_style(btn1, &focused_style, LV_STATE_FOCUSED);
     lv_obj_add_event_cb(btn1, btn1_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_t *btn1_label = lv_label_create(btn1);
-    lv_obj_align(btn1_label, LV_ALIGN_OUT_RIGHT_MID, 0, 18);
     lv_label_set_text(btn1_label, "Pin Map");
-    lv_obj_set_style_text_font(btn1_label, &lv_font_montserrat_20, 0);
-    lv_obj_t *img1 = lv_img_create(btn1);
+    style_menu_entry_label(btn1_label, &lv_font_montserrat_20);
+    lv_obj_t *badge1 = create_menu_icon_badge(btn1, UI_COLOR_ACCENT, 126);
+    lv_obj_t *img1 = lv_img_create(badge1);
     lv_img_set_src(img1, &pinmap_png);                       // Replace with your image variable or path
     lv_obj_set_size(img1, LV_SIZE_CONTENT, LV_SIZE_CONTENT); // Set image size
-    lv_obj_align(img1, LV_ALIGN_OUT_RIGHT_MID, 126, 0);      // Center the image within the button
+    lv_img_set_zoom(img1, 205);
+    lv_obj_center(img1);
+    style_menu_icon(img1, UI_COLOR_ACCENT);
 
     btn2 = lv_btn_create(panel);
     lv_obj_set_size(btn2, 215, 80);
@@ -439,13 +639,15 @@ void ui_Screen1_screen_init(void) // 创建主界面
     lv_obj_add_style(btn2, &focused_style, LV_STATE_FOCUSED);
     lv_obj_add_event_cb(btn2, btn2_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_t *btn2_label = lv_label_create(btn2);
-    lv_obj_align(btn2_label, LV_ALIGN_OUT_RIGHT_MID, 0, 18);
     lv_label_set_text(btn2_label, "DC POWER");
-    lv_obj_set_style_text_font(btn2_label, &lv_font_montserrat_20, 0);
-    lv_obj_t *img2 = lv_img_create(btn2);
+    style_menu_entry_label(btn2_label, &lv_font_montserrat_20);
+    lv_obj_t *badge2 = create_menu_icon_badge(btn2, UI_COLOR_PRIMARY, 126);
+    lv_obj_t *img2 = lv_img_create(badge2);
     lv_img_set_src(img2, &power_png);                        // Replace with your image variable or path
     lv_obj_set_size(img2, LV_SIZE_CONTENT, LV_SIZE_CONTENT); // Set image size
-    lv_obj_align(img2, LV_ALIGN_OUT_RIGHT_MID, 126, 0);      // Center the image within the button
+    lv_img_set_zoom(img2, 205);
+    lv_obj_center(img2);
+    style_menu_icon(img2, UI_COLOR_PRIMARY);
 
     btn3 = lv_btn_create(panel);
     lv_obj_set_size(btn3, 215, 80);
@@ -454,13 +656,15 @@ void ui_Screen1_screen_init(void) // 创建主界面
     lv_obj_add_event_cb(btn3, btn3_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_add_style(btn3, &focused_style, LV_STATE_FOCUSED);
     lv_obj_t *btn3_label = lv_label_create(btn3);
-    lv_obj_align(btn3_label, LV_ALIGN_OUT_RIGHT_MID, 0, 18);
     lv_label_set_text(btn3_label, "PWM OUT");
-    lv_obj_set_style_text_font(btn3_label, &lv_font_montserrat_20, 0);
-    lv_obj_t *img3 = lv_img_create(btn3);
+    style_menu_entry_label(btn3_label, &lv_font_montserrat_20);
+    lv_obj_t *badge3 = create_menu_icon_badge(btn3, 0xFF5C8A, 126);
+    lv_obj_t *img3 = lv_img_create(badge3);
     lv_img_set_src(img3, &pwm_png);                          // Replace with your image variable or path
     lv_obj_set_size(img3, LV_SIZE_CONTENT, LV_SIZE_CONTENT); // Set image size
-    lv_obj_align(img3, LV_ALIGN_OUT_RIGHT_MID, 126, 0);      // Center the image within the button
+    lv_img_set_zoom(img3, 205);
+    lv_obj_center(img3);
+    style_menu_icon(img3, 0xFF5C8A);
 
     btn4 = lv_btn_create(panel);
     lv_obj_set_size(btn4, 215, 80);
@@ -469,13 +673,15 @@ void ui_Screen1_screen_init(void) // 创建主界面
     lv_obj_add_style(btn4, &focused_style, LV_STATE_FOCUSED);
     lv_obj_add_event_cb(btn4, btn4_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_t *btn4_label = lv_label_create(btn4);
-    lv_obj_align(btn4_label, LV_ALIGN_OUT_RIGHT_MID, 0, 18);
     lv_label_set_text(btn4_label, "UART HELPER");
-    lv_obj_set_style_text_font(btn4_label, &lv_font_montserrat_16, 0);
-    lv_obj_t *img4 = lv_img_create(btn4);
+    style_menu_entry_label(btn4_label, &lv_font_montserrat_16);
+    lv_obj_t *badge4 = create_menu_icon_badge(btn4, 0x7C4DFF, 126);
+    lv_obj_t *img4 = lv_img_create(badge4);
     lv_img_set_src(img4, &usarthelper_png);                  // Replace with your image variable or path
     lv_obj_set_size(img4, LV_SIZE_CONTENT, LV_SIZE_CONTENT); // Set image size
-    lv_obj_align(img4, LV_ALIGN_OUT_RIGHT_MID, 126, 0);      // Center the image within the button
+    lv_img_set_zoom(img4, 205);
+    lv_obj_center(img4);
+    style_menu_icon(img4, 0x7C4DFF);
 
     btn5 = lv_btn_create(panel);
     lv_obj_set_size(btn5, 215, 80);
@@ -484,13 +690,15 @@ void ui_Screen1_screen_init(void) // 创建主界面
     lv_obj_add_style(btn5, &focused_style, LV_STATE_FOCUSED);
     lv_obj_add_event_cb(btn5, btn5_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_t *btn5_label = lv_label_create(btn5);
-    lv_obj_align(btn5_label, LV_ALIGN_OUT_RIGHT_MID, 0, 18);
     lv_label_set_text(btn5_label, "I2C SCAN");
-    lv_obj_set_style_text_font(btn5_label, &lv_font_montserrat_20, 0);
-    lv_obj_t *img5 = lv_img_create(btn5);
+    style_menu_entry_label(btn5_label, &lv_font_montserrat_20);
+    lv_obj_t *badge5 = create_menu_icon_badge(btn5, UI_COLOR_TEXT_COOL, 126);
+    lv_obj_t *img5 = lv_img_create(badge5);
     lv_img_set_src(img5, &i2c_png);                          // Replace with your image variable or path
     lv_obj_set_size(img5, LV_SIZE_CONTENT, LV_SIZE_CONTENT); // Set image size
-    lv_obj_align(img5, LV_ALIGN_OUT_RIGHT_MID, 126, 0);      // Center the image within the button
+    lv_img_set_zoom(img5, 205);
+    lv_obj_center(img5);
+    style_menu_icon(img5, UI_COLOR_TEXT_COOL);
 
     btn6 = lv_btn_create(panel);
     lv_obj_set_size(btn6, 215, 80);
@@ -500,13 +708,15 @@ void ui_Screen1_screen_init(void) // 创建主界面
     lv_obj_add_event_cb(btn6, btn6_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(btn6, btn6_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_t *btn6_label = lv_label_create(btn6);
-    lv_obj_align(btn6_label, LV_ALIGN_OUT_RIGHT_MID, 0, 18);
     lv_label_set_text(btn6_label, "Voltmeter");
-    lv_obj_set_style_text_font(btn6_label, &lv_font_montserrat_20, 0);
-    lv_obj_t *img6 = lv_img_create(btn6);
+    style_menu_entry_label(btn6_label, &lv_font_montserrat_20);
+    lv_obj_t *badge6 = create_menu_icon_badge(btn6, UI_COLOR_TEXT_GREEN, 126);
+    lv_obj_t *img6 = lv_img_create(badge6);
     lv_img_set_src(img6, &voltmeter_png);                    // Replace with your image variable or path
     lv_obj_set_size(img6, LV_SIZE_CONTENT, LV_SIZE_CONTENT); // Set image size
-    lv_obj_align(img6, LV_ALIGN_OUT_RIGHT_MID, 126, 0);      // Center the image within the button
+    lv_img_set_zoom(img6, 205);
+    lv_obj_center(img6);
+    style_menu_icon(img6, UI_COLOR_TEXT_GREEN);
 
     btn7 = lv_btn_create(panel);
     lv_obj_set_size(btn7, 215, 80);
@@ -515,13 +725,15 @@ void ui_Screen1_screen_init(void) // 创建主界面
     lv_obj_add_style(btn7, &focused_style, LV_STATE_FOCUSED);
     lv_obj_add_event_cb(btn7, btn7_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_t *btn7_label = lv_label_create(btn7);
-    lv_obj_align(btn7_label, LV_ALIGN_OUT_RIGHT_MID, 0, 18);
     lv_label_set_text(btn7_label, "Simple DSO");
-    lv_obj_set_style_text_font(btn7_label, &lv_font_montserrat_20, 0);
-    lv_obj_t *img7 = lv_img_create(btn7);
+    style_menu_entry_label(btn7_label, &lv_font_montserrat_20);
+    lv_obj_t *badge7 = create_menu_icon_badge(btn7, 0xE64980, 126);
+    lv_obj_t *img7 = lv_img_create(badge7);
     lv_img_set_src(img7, &DSO_png);                          // Replace with your image variable or path
     lv_obj_set_size(img7, LV_SIZE_CONTENT, LV_SIZE_CONTENT); // Set image size
-    lv_obj_align(img7, LV_ALIGN_OUT_RIGHT_MID, 126, 0);      // Center the image within the button
+    lv_img_set_zoom(img7, 205);
+    lv_obj_center(img7);
+    style_menu_icon(img7, 0xE64980);
 
     btn8 = lv_btn_create(panel);
     lv_obj_set_size(btn8, 215, 80);
@@ -530,13 +742,15 @@ void ui_Screen1_screen_init(void) // 创建主界面
     lv_obj_add_style(btn8, &focused_style, LV_STATE_FOCUSED);
     lv_obj_add_event_cb(btn8, btn8_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_t *btn8_label = lv_label_create(btn8);
-    lv_obj_align(btn8_label, LV_ALIGN_OUT_RIGHT_MID, 0, 18);
     lv_label_set_text(btn8_label, "BLE UART");
-    lv_obj_set_style_text_font(btn8_label, &lv_font_montserrat_20, 0);
-    lv_obj_t *img8 = lv_img_create(btn8);
+    style_menu_entry_label(btn8_label, &lv_font_montserrat_20);
+    lv_obj_t *badge8 = create_menu_icon_badge(btn8, 0x00A6A6, 126);
+    lv_obj_t *img8 = lv_img_create(badge8);
     lv_img_set_src(img8, &wireless_png);                     // Replace with your image variable or path
     lv_obj_set_size(img8, LV_SIZE_CONTENT, LV_SIZE_CONTENT); // Set image size
-    lv_obj_align(img8, LV_ALIGN_OUT_RIGHT_MID, 126, 0);      // Center the image within the button
+    lv_img_set_zoom(img8, 205);
+    lv_obj_center(img8);
+    style_menu_icon(img8, 0x00A6A6);
 
     btn9 = lv_btn_create(panel);
     lv_obj_set_size(btn9, 215, 80);
@@ -545,13 +759,15 @@ void ui_Screen1_screen_init(void) // 创建主界面
     lv_obj_add_style(btn9, &focused_style, LV_STATE_FOCUSED);
     lv_obj_add_event_cb(btn9, btn9_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_t *btn9_label = lv_label_create(btn9);
-    lv_obj_align(btn9_label, LV_ALIGN_OUT_RIGHT_MID, 0, 18);
     lv_label_set_text(btn9_label, "FRE Count");
-    lv_obj_set_style_text_font(btn9_label, &lv_font_montserrat_20, 0);
-    lv_obj_t *img9 = lv_img_create(btn9);
+    style_menu_entry_label(btn9_label, &lv_font_montserrat_20);
+    lv_obj_t *badge9 = create_menu_icon_badge(btn9, 0xF59E0B, 126);
+    lv_obj_t *img9 = lv_img_create(badge9);
     lv_img_set_src(img9, &FREcounter_png);                   // Replace with your image variable or path
     lv_obj_set_size(img9, LV_SIZE_CONTENT, LV_SIZE_CONTENT); // Set image size
-    lv_obj_align(img9, LV_ALIGN_OUT_RIGHT_MID, 126, 0);      // Center the image within the button
+    lv_img_set_zoom(img9, 205);
+    lv_obj_center(img9);
+    style_menu_icon(img9, 0xF59E0B);
 
     btn10 = lv_btn_create(panel);
     lv_obj_set_size(btn10, 215, 80);
@@ -560,13 +776,15 @@ void ui_Screen1_screen_init(void) // 创建主界面
     lv_obj_add_style(btn10, &focused_style, LV_STATE_FOCUSED);
     lv_obj_add_event_cb(btn10, btn10_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_t *btn10_label = lv_label_create(btn10);
-    lv_obj_align(btn10_label, LV_ALIGN_OUT_RIGHT_MID, 0, 18);
     lv_label_set_text(btn10_label, "Device INFO");
-    lv_obj_set_style_text_font(btn10_label, &lv_font_montserrat_20, 0);
-    lv_obj_t *img10 = lv_img_create(btn10);
+    style_menu_entry_label(btn10_label, &lv_font_montserrat_20);
+    lv_obj_t *badge10 = create_menu_icon_badge(btn10, 0x5B6CFF, 126);
+    lv_obj_t *img10 = lv_img_create(badge10);
     lv_img_set_src(img10, &readme_png);                       // Replace with your image variable or path
     lv_obj_set_size(img10, LV_SIZE_CONTENT, LV_SIZE_CONTENT); // Set image size
-    lv_obj_align(img10, LV_ALIGN_OUT_RIGHT_MID, 126, 0);      // Center the image within the button
+    lv_img_set_zoom(img10, 205);
+    lv_obj_center(img10);
+    style_menu_icon(img10, 0x5B6CFF);
 
     btn11 = lv_btn_create(panel);
     lv_obj_set_size(btn11, 215, 80);
@@ -575,19 +793,21 @@ void ui_Screen1_screen_init(void) // 创建主界面
     lv_obj_add_style(btn11, &focused_style, LV_STATE_FOCUSED);
     lv_obj_add_event_cb(btn11, btn11_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_t *btn11_label = lv_label_create(btn11);
-    lv_obj_align(btn11_label, LV_ALIGN_OUT_RIGHT_MID, 0, 18);
     lv_label_set_text(btn11_label, "Setting");
-    lv_obj_set_style_text_font(btn11_label, &lv_font_montserrat_20, 0);
-    lv_obj_t *btn11_icon = lv_img_create(btn11);
+    style_menu_entry_label(btn11_label, &lv_font_montserrat_20);
+    lv_obj_t *badge11 = create_menu_icon_badge(btn11, UI_COLOR_TEXT_RED, 126);
+    lv_obj_t *btn11_icon = lv_img_create(badge11);
     lv_img_set_src(btn11_icon, &setting_png);
     lv_obj_set_size(btn11_icon, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-    lv_obj_align(btn11_icon, LV_ALIGN_OUT_RIGHT_MID, 126, -3);
+    lv_img_set_zoom(btn11_icon, 205);
+    lv_obj_center(btn11_icon);
+    style_menu_icon(btn11_icon, UI_COLOR_TEXT_RED);
 
     lv_style_init(&style_rect);
     // 设置边框的颜色和粗细
-    lv_style_set_border_color(&style_rect, lv_color_hex(0xFF0000)); // 红色边框
+    lv_style_set_border_color(&style_rect, lv_color_hex(UI_COLOR_BORDER));
     lv_style_set_border_width(&style_rect, 3);                      // 5 像素粗细
-    lv_style_set_bg_color(&style_rect, lv_color_hex(0x000000));     // 白色背景
+    lv_style_set_bg_color(&style_rect, lv_color_hex(UI_COLOR_CARD));
     lv_style_set_radius(&style_rect, 20);                           // 圆角半径
 
     slider = lv_slider_create(lv_scr_act());
@@ -596,9 +816,9 @@ void ui_Screen1_screen_init(void) // 创建主界面
     lv_slider_set_range(slider, 1, 11);
     lv_slider_set_value(slider, get_saved_slider_value(), LV_ANIM_OFF);
     lv_obj_set_style_bg_opa(slider, LV_OPA_COVER, 0);
-    lv_obj_set_style_bg_color(slider, lv_color_hex(0xFF0000), LV_PART_KNOB);
-    lv_obj_set_style_bg_color(slider, lv_color_hex(0x333333), LV_PART_MAIN);
-    lv_obj_set_style_bg_color(slider, lv_color_hex(0x333333), LV_PART_INDICATOR);
+    lv_obj_set_style_bg_color(slider, lv_color_hex(UI_COLOR_PRIMARY), LV_PART_KNOB);
+    lv_obj_set_style_bg_color(slider, lv_color_hex(UI_COLOR_PRIMARY_SOFT), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(slider, lv_color_hex(UI_COLOR_SECONDARY_SOFT), LV_PART_INDICATOR);
     lv_obj_add_event_cb(slider, slider_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
     slider_update_timer = lv_timer_create(update_slider_timer, 300, NULL);
 
@@ -606,13 +826,13 @@ void ui_Screen1_screen_init(void) // 创建主界面
         lv_obj_t *bat_volt_label = lv_label_create(lv_scr_act());
         lv_label_set_text(bat_volt_label, "100");
         lv_obj_set_pos(bat_volt_label, 251, 220);
-        lv_obj_set_style_text_color(bat_volt_label, lv_color_hex(0xFFFFFF), 0);
+        lv_obj_set_style_text_color(bat_volt_label, lv_color_hex(UI_COLOR_TEXT), 0);
         lv_obj_set_style_text_font(bat_volt_label, &lv_font_montserrat_10, 0);
 
         lv_obj_t *bat_volt_label2 = lv_label_create(lv_scr_act());
         lv_obj_set_pos(bat_volt_label2, 275, 220);
         lv_label_set_text(bat_volt_label2, "%");
-        lv_obj_set_style_text_color(bat_volt_label2, lv_color_hex(0xFFFFFF), 0);
+        lv_obj_set_style_text_color(bat_volt_label2, lv_color_hex(UI_COLOR_TEXT), 0);
         lv_obj_set_style_text_font(bat_volt_label2, &lv_font_montserrat_14, 0);
        */
     bat_label = lv_label_create(lv_scr_act());
@@ -623,7 +843,7 @@ void ui_Screen1_screen_init(void) // 创建主界面
 
     bat_voltage_label = lv_label_create(lv_scr_act());
     lv_label_set_text(bat_voltage_label, "0.00V");
-    lv_obj_set_style_text_color(bat_voltage_label, lv_color_hex(0xFFFFFF), 0);
+    lv_obj_set_style_text_color(bat_voltage_label, lv_color_hex(UI_COLOR_TEXT), 0);
     lv_obj_set_style_text_font(bat_voltage_label, &lv_font_montserrat_14, 0);
     lv_obj_align_to(bat_voltage_label, bat_label, LV_ALIGN_OUT_TOP_MID, 0, -2);
 
@@ -650,17 +870,17 @@ void pinmap_init(void)
 {
 
     lv_obj_clean(lv_scr_act());
-    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
+    apply_page_bg();
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
     lv_obj_t *name_label1 = lv_label_create(lv_scr_act());         // 将文本标签添加到圆角矩形中
-    lv_label_set_text(name_label1, "#FFD700 ROW1:MCU and power#"); // 设置文本内容
+    lv_label_set_text(name_label1, "#A84B00 ROW1:MCU and power#"); // 设置文本内容
     lv_obj_set_style_text_font(name_label1, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(name_label1, 10, 26);
     lv_label_set_recolor(name_label1, true);
 
     lv_obj_t *name_label2 = lv_label_create(lv_scr_act());           // 将文本标签添加到圆角矩形中
-    lv_label_set_text(name_label2, "#00FFFF ROW2:DLA and DAPlink#"); // 设置文本内容
+    lv_label_set_text(name_label2, "#006D77 ROW2:DLA and DAPlink#"); // 设置文本内容
     lv_obj_set_style_text_font(name_label2, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(name_label2, 10, 60);
     lv_label_set_recolor(name_label2, true);
@@ -1059,23 +1279,23 @@ void pinmap_init(void)
 void power_init(void)
 {
     lv_obj_clean(lv_scr_act());
-    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
+    apply_page_bg();
 
     ina266_flag = 1;
     digitalWrite(1, LOW);
 
     lv_obj_t *volt = lv_label_create(lv_scr_act());
-    lv_obj_set_style_text_color(volt, lv_color_hex(0xFF0000), 0);
+    lv_obj_set_style_text_color(volt, lv_color_hex(UI_COLOR_TEXT_RED), 0);
     lv_obj_set_style_text_font(volt, &lv_font_montserrat_28, 0);
     lv_obj_set_pos(volt, 20, 10);
 
     lv_obj_t *cur = lv_label_create(lv_scr_act());
-    lv_obj_set_style_text_color(cur, lv_color_hex(0x00FF7F), 0);
+    lv_obj_set_style_text_color(cur, lv_color_hex(UI_COLOR_TEXT_GREEN), 0);
     lv_obj_set_style_text_font(cur, &lv_font_montserrat_28, 0);
     lv_obj_set_pos(cur, 20, 35);
 
     lv_obj_t *watt = lv_label_create(lv_scr_act());
-    lv_obj_set_style_text_color(watt, lv_color_hex(0x00FFFF), 0);
+    lv_obj_set_style_text_color(watt, lv_color_hex(UI_COLOR_TEXT_COOL), 0);
     lv_obj_set_style_text_font(watt, &lv_font_montserrat_28, 0);
     lv_obj_set_pos(watt, 20, 60);
 
@@ -1086,24 +1306,23 @@ void power_init(void)
     lv_obj_t *V = lv_label_create(lv_scr_act());
     lv_obj_set_style_text_font(V, &lv_font_montserrat_28, 0);
     lv_obj_set_pos(V, 106, 10);
-    lv_label_set_text(V, "#FF0000 V#"); // 设置文本内容
+    lv_label_set_text(V, "#C62828 V#"); // 设置文本内容
     lv_label_set_recolor(V, true);
 
     lv_obj_t *A = lv_label_create(lv_scr_act());
     lv_obj_set_style_text_font(A, &lv_font_montserrat_28, 0);
     lv_obj_set_pos(A, 106, 35);
-    lv_label_set_text(A, "#00FF7F A#"); // 设置文本内容
+    lv_label_set_text(A, "#17803D A#"); // 设置文本内容
     lv_label_set_recolor(A, true);
 
     lv_obj_t *W = lv_label_create(lv_scr_act());
     lv_obj_set_style_text_font(W, &lv_font_montserrat_28, 0);
     lv_obj_set_pos(W, 101, 60);
-    lv_label_set_text(W, "#00FFFF W#"); // 设置文本内容
+    lv_label_set_text(W, "#006D77 W#"); // 设置文本内容
     lv_label_set_recolor(W, true);
 
     volt_chart = lv_chart_create(lv_scr_act());
-    lv_obj_set_style_bg_color(volt_chart, lv_color_hex(0x303030), LV_PART_MAIN);
-    lv_obj_set_style_line_color(volt_chart, lv_color_hex(0x696969), LV_PART_MAIN);
+    style_chart_surface(volt_chart);
     lv_obj_set_size(volt_chart, 260, 50);
     lv_obj_set_pos(volt_chart, 10, 100);
     lv_chart_set_point_count(volt_chart, 15);
@@ -1117,8 +1336,7 @@ void power_init(void)
     lv_chart_refresh(volt_chart);
 
     cur_chart = lv_chart_create(lv_scr_act());
-    lv_obj_set_style_bg_color(cur_chart, lv_color_hex(0x303030), LV_PART_MAIN);
-    lv_obj_set_style_line_color(cur_chart, lv_color_hex(0x696969), LV_PART_MAIN);
+    style_chart_surface(cur_chart);
     lv_obj_set_size(cur_chart, 260, 50);
     lv_obj_set_pos(cur_chart, 10, 153);
     lv_chart_set_point_count(cur_chart, 15);
@@ -1134,14 +1352,15 @@ void power_init(void)
     // 设置聚焦状的边框
     static lv_style_t focused_style;
     lv_style_init(&focused_style);
-    lv_style_set_border_color(&focused_style, lv_color_hex(0xFFD700));
+    lv_style_set_border_color(&focused_style, lv_color_hex(UI_COLOR_PRIMARY));
     lv_style_set_border_width(&focused_style, 3);
 
     static lv_style_t powerbtn_style;
     lv_style_init(&powerbtn_style);
-    lv_style_set_bg_color(&powerbtn_style, lv_color_hex(0x000000));
-    lv_style_set_border_color(&powerbtn_style, lv_color_hex(0x808080));
+    lv_style_set_bg_color(&powerbtn_style, lv_color_hex(UI_COLOR_CARD));
+    lv_style_set_border_color(&powerbtn_style, lv_color_hex(UI_COLOR_BORDER));
     lv_style_set_border_width(&powerbtn_style, 2);
+    lv_style_set_text_color(&powerbtn_style, lv_color_hex(UI_COLOR_TEXT));
 
     lv_obj_t *poweron = lv_btn_create(lv_scr_act());
     lv_obj_set_size(poweron, 41, 83);
@@ -1150,7 +1369,7 @@ void power_init(void)
     lv_obj_add_style(poweron, &focused_style, LV_STATE_FOCUSED);
     lv_obj_add_event_cb(poweron, poweronbtn_event_cb, LV_EVENT_CLICKED, NULL);
     poweron_label = lv_label_create(poweron);
-    lv_obj_set_style_text_color(poweron_label, lv_color_hex(0xFF0000), 0);
+    lv_obj_set_style_text_color(poweron_label, lv_color_hex(UI_COLOR_PRIMARY), 0);
     lv_obj_align(poweron_label, LV_ALIGN_CENTER, 0, 0);
     lv_label_set_text(poweron_label, LV_SYMBOL_POWER);
     lv_obj_set_style_text_font(poweron_label, &lv_font_montserrat_28, 0);
@@ -1164,7 +1383,7 @@ void power_init(void)
     // lv_obj_add_style(poweron, &focused_style, LV_STATE_FOCUSED);
     // lv_obj_add_event_cb(poweron, btn1_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_t *VUP_label = lv_label_create(VUP);
-    lv_obj_set_style_text_color(VUP_label, lv_color_hex(0x87CEEB), 0);
+    lv_obj_set_style_text_color(VUP_label, lv_color_hex(UI_COLOR_TEXT_BLUE), 0);
     lv_obj_align(VUP_label, LV_ALIGN_CENTER, 0, 0);
     lv_label_set_text(VUP_label, LV_SYMBOL_PLUS);
     lv_obj_set_style_text_font(VUP_label, &lv_font_montserrat_24, 0);
@@ -1178,7 +1397,7 @@ void power_init(void)
     // lv_obj_add_style(poweron, &focused_style, LV_STATE_FOCUSED);
     // lv_obj_add_event_cb(poweron, btn1_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_t *VDOWN_label = lv_label_create(VDOWN);
-    lv_obj_set_style_text_color(VDOWN_label, lv_color_hex(0x87CEEB), 0);
+    lv_obj_set_style_text_color(VDOWN_label, lv_color_hex(UI_COLOR_TEXT_BLUE), 0);
     lv_obj_align(VDOWN_label, LV_ALIGN_CENTER, 0, 0);
     lv_label_set_text(VDOWN_label, LV_SYMBOL_MINUS);
     lv_obj_set_style_text_font(VDOWN_label, &lv_font_montserrat_24, 0);
@@ -1192,7 +1411,7 @@ void power_init(void)
     // lv_obj_add_style(poweron, &focused_style, LV_STATE_FOCUSED);
     // lv_obj_add_event_cb(poweron, btn1_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_t *V11_label = lv_label_create(V11);
-    lv_obj_set_style_text_color(V11_label, lv_color_hex(0xFFD700), 0);
+    lv_obj_set_style_text_color(V11_label, lv_color_hex(UI_COLOR_TEXT_WARM), 0);
     lv_obj_align(V11_label, LV_ALIGN_CENTER, 0, 0);
     lv_label_set_text(V11_label, "11V");
     lv_obj_set_style_text_font(V11_label, &lv_font_montserrat_20, 0);
@@ -1206,7 +1425,7 @@ void power_init(void)
     // lv_obj_add_style(poweron, &focused_style, LV_STATE_FOCUSED);
     // lv_obj_add_event_cb(poweron, btn1_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_t *V5_label = lv_label_create(V5);
-    lv_obj_set_style_text_color(V5_label, lv_color_hex(0xFFD700), 0);
+    lv_obj_set_style_text_color(V5_label, lv_color_hex(UI_COLOR_TEXT_WARM), 0);
     lv_obj_align(V5_label, LV_ALIGN_CENTER, 0, 0);
     lv_label_set_text(V5_label, "5V");
     lv_obj_set_style_text_font(V5_label, &lv_font_montserrat_20, 0);
@@ -1220,7 +1439,7 @@ void power_init(void)
     // lv_obj_add_style(poweron, &focused_style, LV_STATE_FOCUSED);
     // lv_obj_add_event_cb(poweron, btn1_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_t *V3_label = lv_label_create(V3);
-    lv_obj_set_style_text_color(V3_label, lv_color_hex(0xFFD700), 0);
+    lv_obj_set_style_text_color(V3_label, lv_color_hex(UI_COLOR_TEXT_WARM), 0);
     lv_obj_align(V3_label, LV_ALIGN_CENTER, 0, 0);
     lv_label_set_text(V3_label, "3V3");
     lv_obj_set_style_text_font(V3_label, &lv_font_montserrat_18, 0);
@@ -1267,7 +1486,7 @@ void power_init(void)
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
     lv_obj_t *volt_label1 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形中
-    lv_label_set_text(volt_label1, "#FFD700 ROW1#");       // 设置文本内容
+    lv_label_set_text(volt_label1, "#A84B00 ROW1#");       // 设置文本内容
     lv_obj_set_style_text_font(volt_label1, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(volt_label1, 180, 210);
     lv_label_set_recolor(volt_label1, true);
@@ -1279,14 +1498,34 @@ void pwm_init(void)
 {
 
     lv_obj_clean(lv_scr_act());
-    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
+    apply_page_bg();
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
+
+    lv_obj_t *pwm_wave_card = lv_obj_create(lv_scr_act());
+    lv_obj_remove_style(pwm_wave_card, 0, LV_PART_SCROLLBAR);
+    lv_obj_set_size(pwm_wave_card, 250, 92);
+    lv_obj_set_pos(pwm_wave_card, 24, 108);
+    lv_obj_set_style_radius(pwm_wave_card, 20, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(pwm_wave_card, lv_color_hex(UI_COLOR_CARD), LV_PART_MAIN);
+    lv_obj_set_style_border_color(pwm_wave_card, lv_color_hex(UI_COLOR_ACCENT_SOFT), LV_PART_MAIN);
+    lv_obj_set_style_border_width(pwm_wave_card, 2, LV_PART_MAIN);
+    lv_obj_set_style_shadow_width(pwm_wave_card, 0, LV_PART_MAIN);
+
+    lv_obj_t *pwm_wave_glow = lv_obj_create(pwm_wave_card);
+    lv_obj_remove_style_all(pwm_wave_glow);
+    lv_obj_set_size(pwm_wave_glow, 220, 56);
+    lv_obj_align(pwm_wave_glow, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_style_radius(pwm_wave_glow, 16, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(pwm_wave_glow, lv_color_hex(0xFFE2EF), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(pwm_wave_glow, LV_OPA_60, LV_PART_MAIN);
 
 
     lv_obj_t *pwm = lv_img_create(lv_scr_act());
     lv_img_set_src(pwm, &pwmint_png);                       // Replace with your image variable or path
     lv_obj_set_size(pwm, LV_SIZE_CONTENT, LV_SIZE_CONTENT); // Set image size
-    lv_obj_set_pos(pwm, 40, 110);
+    lv_obj_set_pos(pwm, 40, 116);
+    lv_obj_set_style_img_recolor(pwm, lv_color_hex(0xFF5C8A), LV_PART_MAIN);
+    lv_obj_set_style_img_recolor_opa(pwm, LV_OPA_90, LV_PART_MAIN);
 
     lv_obj_t *rounded_rect1 = lv_obj_create(lv_scr_act());
     lv_obj_remove_style(rounded_rect1, 0, LV_PART_SCROLLBAR);
@@ -1321,7 +1560,7 @@ void pwm_init(void)
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
     lv_obj_t *volt_label1 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形中
-    lv_label_set_text(volt_label1, "#FFD700 ROW1#");       // 设置文本内容
+    lv_label_set_text(volt_label1, "#A84B00 ROW1#");       // 设置文本内容
     lv_obj_set_style_text_font(volt_label1, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(volt_label1, 180, 210);
     lv_label_set_recolor(volt_label1, true);
@@ -1332,6 +1571,7 @@ void pwm_init(void)
     lv_textarea_set_one_line(fre, true);                                   /* 设置单行模式 */
     lv_obj_set_size(fre, 100, 45);
     lv_obj_set_pos(fre, 72, 10);
+    style_input_surface(fre);
 
     duty = lv_textarea_create(lv_scr_act()); /* 创建文本框*/
     lv_textarea_set_placeholder_text(duty, "0-100");
@@ -1339,27 +1579,28 @@ void pwm_init(void)
     lv_textarea_set_one_line(duty, true);                                   /* 设置单行模式 */
     lv_obj_set_size(duty, 100, 45);
     lv_obj_set_pos(duty, 72, 60);
+    style_input_surface(duty);
 
     lv_obj_t *fre_label1 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形中
-    lv_label_set_text(fre_label1, "#FFD700 FRE#");        // 设置文本内容
+    lv_label_set_text(fre_label1, "#A84B00 FRE#");        // 设置文本内容
     lv_obj_set_style_text_font(fre_label1, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(fre_label1, 10, 20);
     lv_label_set_recolor(fre_label1, true);
 
     lv_obj_t *duty_label1 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形中
-    lv_label_set_text(duty_label1, "#87CEFA DUTY#");       // 设置文本内容
+    lv_label_set_text(duty_label1, "#1D4ED8 DUTY#");       // 设置文本内容
     lv_obj_set_style_text_font(duty_label1, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(duty_label1, 10, 70);
     lv_label_set_recolor(duty_label1, true);
 
     lv_obj_t *fre_label2 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形中
-    lv_label_set_text(fre_label2, "#FFD700 Hz#");         // 设置文本内容
+    lv_label_set_text(fre_label2, "#A84B00 Hz#");         // 设置文本内容
     lv_obj_set_style_text_font(fre_label2, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(fre_label2, 180, 20);
     lv_label_set_recolor(fre_label2, true);
 
     lv_obj_t *duty_label2 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形中
-    lv_label_set_text(duty_label2, "#87CEFA %#");          // 设置文本内容
+    lv_label_set_text(duty_label2, "#1D4ED8 %#");          // 设置文本内容
     lv_obj_set_style_text_font(duty_label2, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(duty_label2, 180, 65);
     lv_label_set_recolor(duty_label2, true);
@@ -1380,9 +1621,10 @@ void pwm_init(void)
 
     static lv_style_t pwm_style;
     lv_style_init(&pwm_style);
-    lv_style_set_bg_color(&pwm_style, lv_color_hex(0xFF0000));
-    lv_style_set_border_color(&pwm_style, lv_color_hex(0x000000));
+    lv_style_set_bg_color(&pwm_style, lv_color_hex(UI_COLOR_PRIMARY));
+    lv_style_set_border_color(&pwm_style, lv_color_hex(UI_COLOR_BORDER));
     lv_style_set_border_width(&pwm_style, 2);
+    lv_style_set_text_color(&pwm_style, lv_color_hex(0xFFFFFF));
 
     pwm_btn = lv_btn_create(lv_scr_act());
     lv_obj_add_style(pwm_btn, &pwm_style, 0); // 将样式应用到矩形中
@@ -1402,7 +1644,7 @@ void uarthelper_init(void)
 {
 
     lv_obj_clean(lv_scr_act());
-    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
+    apply_page_bg();
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
 
@@ -1455,19 +1697,19 @@ void uarthelper_init(void)
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
     lv_obj_t *volt_label1 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形中
-    lv_label_set_text(volt_label1, "#FFD700 ROW1#");       // 设置文本内容
+    lv_label_set_text(volt_label1, "#A84B00 ROW1#");       // 设置文本内容
     lv_obj_set_style_text_font(volt_label1, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(volt_label1, 180, 210);
     lv_label_set_recolor(volt_label1, true);
 
     lv_obj_t *volt_label2 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形中
-    lv_label_set_text(volt_label2, "#00FF7F UART#");       // 设置文本内容
+    lv_label_set_text(volt_label2, "#17803D UART#");       // 设置文本内容
     lv_obj_set_style_text_font(volt_label2, &lv_font_montserrat_28, 0);
     lv_obj_set_pos(volt_label2, 15, 32);
     lv_label_set_recolor(volt_label2, true);
 
     lv_obj_t *volt_label3 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形中
-    lv_label_set_text(volt_label3, "#00FFFF baudRate#");   // 设置文本内容
+    lv_label_set_text(volt_label3, "#006D77 baudRate#");   // 设置文本内容
     lv_obj_set_style_text_font(volt_label3, &lv_font_montserrat_18, 0);
     lv_obj_set_pos(volt_label3, 170, 5);
     lv_label_set_recolor(volt_label3, true);
@@ -1477,10 +1719,12 @@ void uarthelper_init(void)
     lv_obj_set_pos(uart_extarea, 6, 75);
     lv_textarea_set_max_length(uart_extarea, 1024);
     lv_textarea_set_placeholder_text(uart_extarea, "USART monitor output");
+    style_input_surface(uart_extarea);
 
     uart_list = lv_dropdown_create(lv_scr_act());
     lv_obj_set_size(uart_list, 105, 40);
     lv_obj_set_pos(uart_list, 170, 30);
+    style_input_surface(uart_list);
     lv_dropdown_set_options(uart_list, "");
     lv_dropdown_add_option(uart_list, "1200", 0);
     lv_dropdown_add_option(uart_list, "2400", 1);
@@ -1499,9 +1743,10 @@ void uarthelper_init(void)
 
     static lv_style_t uart_style;
     lv_style_init(&uart_style);
-    lv_style_set_bg_color(&uart_style, lv_color_hex(0xFF0000));
-    lv_style_set_border_color(&uart_style, lv_color_hex(0x000000));
+    lv_style_set_bg_color(&uart_style, lv_color_hex(UI_COLOR_PRIMARY));
+    lv_style_set_border_color(&uart_style, lv_color_hex(UI_COLOR_BORDER));
     lv_style_set_border_width(&uart_style, 2);
+    lv_style_set_text_color(&uart_style, lv_color_hex(0xFFFFFF));
 
     uart_btn = lv_btn_create(lv_scr_act());
     lv_obj_add_style(uart_btn, &uart_style, 0); // 将样式应用到矩形中
@@ -1521,7 +1766,7 @@ void i2c_init(void)
 {
 
     lv_obj_clean(lv_scr_act());
-    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
+    apply_page_bg();
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
 
@@ -1574,13 +1819,13 @@ void i2c_init(void)
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
     lv_obj_t *volt_label1 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形中
-    lv_label_set_text(volt_label1, "#FFD700 ROW1#");       // 设置文本内容
+    lv_label_set_text(volt_label1, "#A84B00 ROW1#");       // 设置文本内容
     lv_obj_set_style_text_font(volt_label1, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(volt_label1, 180, 210);
     lv_label_set_recolor(volt_label1, true);
 
     lv_obj_t *volt_label2 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形中
-    lv_label_set_text(volt_label2, "#00FFFF I2C Device#"); // 设置文本内容
+    lv_label_set_text(volt_label2, "#006D77 I2C Device#"); // 设置文本内容
     lv_obj_set_style_text_font(volt_label2, &lv_font_montserrat_28, 0);
     lv_obj_set_pos(volt_label2, 15, 26);
     lv_label_set_recolor(volt_label2, true);
@@ -1588,12 +1833,14 @@ void i2c_init(void)
     i2c_extarea = lv_textarea_create(lv_scr_act());
     lv_obj_set_size(i2c_extarea, 269, 120);
     lv_obj_set_pos(i2c_extarea, 6, 75);
+    style_input_surface(i2c_extarea);
 
     static lv_style_t i2con_style;
     lv_style_init(&i2con_style);
-    lv_style_set_bg_color(&i2con_style, lv_color_hex(0xFF0000));
-    lv_style_set_border_color(&i2con_style, lv_color_hex(0x000000));
+    lv_style_set_bg_color(&i2con_style, lv_color_hex(UI_COLOR_PRIMARY));
+    lv_style_set_border_color(&i2con_style, lv_color_hex(UI_COLOR_BORDER));
     lv_style_set_border_width(&i2con_style, 2);
+    lv_style_set_text_color(&i2con_style, lv_color_hex(0xFFFFFF));
 
     i2con = lv_btn_create(lv_scr_act());
     lv_obj_add_style(i2con, &i2con_style, 0); // 将样式应用到矩形中
@@ -1613,7 +1860,7 @@ void voltmeter_init(void)
 {
 
     lv_obj_clean(lv_scr_act());
-    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
+    apply_page_bg();
     ina266_flag = 1;
     digitalWrite(1, LOW);
     lv_obj_t *label1 = lv_label_create(lv_scr_act());
@@ -1623,12 +1870,11 @@ void voltmeter_init(void)
     lv_obj_t *label2 = lv_label_create(lv_scr_act());
     lv_obj_set_style_text_font(label2, &lv_font_montserrat_28, 0);
     lv_obj_set_pos(label2, 200, 20);
-    lv_label_set_text(label2, "#FF0000 V#"); // 设置文本内容
+    lv_label_set_text(label2, "#C62828 V#"); // 设置文本内容
     lv_label_set_recolor(label2, true);
 
     volt_chart = lv_chart_create(lv_scr_act());
-    lv_obj_set_style_bg_color(volt_chart, lv_color_hex(0x303030), LV_PART_MAIN);
-    lv_obj_set_style_line_color(volt_chart, lv_color_hex(0x696969), LV_PART_MAIN);
+    style_chart_surface(volt_chart);
     lv_obj_set_size(volt_chart, 260, 140);
     lv_obj_set_pos(volt_chart, 35, 60);
     lv_chart_set_point_count(volt_chart, 15);
@@ -1674,7 +1920,7 @@ void voltmeter_init(void)
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
     lv_obj_t *volt_label1 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形中
-    lv_label_set_text(volt_label1, "#FFD700 ROW1#");       // 设置文本内容
+    lv_label_set_text(volt_label1, "#A84B00 ROW1#");       // 设置文本内容
     lv_obj_set_style_text_font(volt_label1, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(volt_label1, 180, 210);
     lv_label_set_recolor(volt_label1, true);
@@ -1686,7 +1932,7 @@ void DSO_init(void)
 {
 
     lv_obj_clean(lv_scr_act());
-    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
+    apply_page_bg();
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
 
@@ -1695,8 +1941,7 @@ void DSO_init(void)
     DSO_chart = lv_chart_create(lv_scr_act());
     lv_obj_set_size(DSO_chart, 269, 165);
     lv_obj_set_pos(DSO_chart, 6, 30);
-    lv_obj_set_style_bg_color(DSO_chart, lv_color_hex(0x303030), LV_PART_MAIN);
-    lv_obj_set_style_line_color(DSO_chart, lv_color_hex(0x696969), LV_PART_MAIN);
+    style_chart_surface(DSO_chart);
     lv_chart_set_point_count(DSO_chart, 64);
     lv_chart_set_div_line_count(DSO_chart, 7, 11);
     lv_chart_set_axis_tick(DSO_chart, LV_CHART_AXIS_PRIMARY_Y, 4, 2, 7, 2, false, 30);
@@ -1709,32 +1954,32 @@ void DSO_init(void)
     lv_chart_refresh(DSO_chart);
 
     lv_obj_t *max_label = lv_label_create(lv_scr_act());
-    lv_obj_set_style_text_color(max_label, lv_color_hex(0xFF0000), 0);
+    lv_obj_set_style_text_color(max_label, lv_color_hex(UI_COLOR_TEXT_RED), 0);
     lv_obj_set_style_text_font(max_label, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(max_label, 10, 10);
     lv_label_set_text(max_label, "max"); // 设置文本内容
     lv_obj_t *maxValue_label = lv_label_create(lv_scr_act());
-    lv_obj_set_style_text_color(maxValue_label, lv_color_hex(0xFF0000), 0);
+    lv_obj_set_style_text_color(maxValue_label, lv_color_hex(UI_COLOR_TEXT_RED), 0);
     lv_obj_set_style_text_font(maxValue_label, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(maxValue_label, 55, 10);
 
     lv_obj_t *min_label = lv_label_create(lv_scr_act());
-    lv_obj_set_style_text_color(min_label, lv_color_hex(0x00FF7F), 0);
+    lv_obj_set_style_text_color(min_label, lv_color_hex(UI_COLOR_TEXT_GREEN), 0);
     lv_obj_set_style_text_font(min_label, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(min_label, 98, 10);
     lv_label_set_text(min_label, "min"); // 设置文本内容
     lv_obj_t *minValue_label = lv_label_create(lv_scr_act());
-    lv_obj_set_style_text_color(minValue_label, lv_color_hex(0x00FF7F), 0);
+    lv_obj_set_style_text_color(minValue_label, lv_color_hex(UI_COLOR_TEXT_GREEN), 0);
     lv_obj_set_style_text_font(minValue_label, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(minValue_label, 140, 10);
 
     lv_obj_t *vpp_label = lv_label_create(lv_scr_act());
-    lv_obj_set_style_text_color(vpp_label, lv_color_hex(0x00FFFF), 0);
+    lv_obj_set_style_text_color(vpp_label, lv_color_hex(UI_COLOR_TEXT_COOL), 0);
     lv_obj_set_style_text_font(vpp_label, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(vpp_label, 185, 10);
     lv_label_set_text(vpp_label, "vpp"); // 设置文本内容
     lv_obj_t *peakToPeakValue_label = lv_label_create(lv_scr_act());
-    lv_obj_set_style_text_color(peakToPeakValue_label, lv_color_hex(0x00FFFF), 0);
+    lv_obj_set_style_text_color(peakToPeakValue_label, lv_color_hex(UI_COLOR_TEXT_COOL), 0);
     lv_obj_set_style_text_font(peakToPeakValue_label, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(peakToPeakValue_label, 225, 10);
 
@@ -1775,13 +2020,13 @@ void DSO_init(void)
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
     lv_obj_t *volt_label1 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形中
-    lv_label_set_text(volt_label1, "#FFD700 ROW1#");       // 设置文本内容
+    lv_label_set_text(volt_label1, "#A84B00 ROW1#");       // 设置文本内容
     lv_obj_set_style_text_font(volt_label1, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(volt_label1, 115, 210);
     lv_label_set_recolor(volt_label1, true);
 
     lv_obj_t *volt_label2 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形中
-    lv_label_set_text(volt_label2, "#FFD700 0.55v/Div#");  // 设置文本内容
+    lv_label_set_text(volt_label2, "#A84B00 0.55v/Div#");  // 设置文本内容
     lv_obj_set_style_text_font(volt_label2, &lv_font_montserrat_18, 0);
     lv_obj_set_pos(volt_label2, 190, 211);
     lv_label_set_recolor(volt_label2, true);
@@ -1806,7 +2051,7 @@ void wirelessuart_init(void)
 {
 
     lv_obj_clean(lv_scr_act());
-    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
+    apply_page_bg();
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
 
@@ -1859,20 +2104,20 @@ void wirelessuart_init(void)
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
     lv_obj_t *volt_label1 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形中
-    lv_label_set_text(volt_label1, "#FFD700 ROW1#");       // 设置文本内容
+    lv_label_set_text(volt_label1, "#A84B00 ROW1#");       // 设置文本内容
     lv_obj_set_style_text_font(volt_label1, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(volt_label1, 180, 210);
     lv_label_set_recolor(volt_label1, true);
 
     lv_obj_t *volt_label2 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形中
-    lv_obj_set_style_text_color(volt_label2, lv_color_hex(0x1E90FF), 0);
+    lv_obj_set_style_text_color(volt_label2, lv_color_hex(UI_COLOR_TEXT_BLUE), 0);
     lv_label_set_text(volt_label2, LV_SYMBOL_BLUETOOTH "BLE"); // 设置文本内容
     lv_obj_set_style_text_font(volt_label2, &lv_font_montserrat_28, 0);
     lv_obj_set_pos(volt_label2, 6, 32);
     lv_label_set_recolor(volt_label2, true);
 
     lv_obj_t *volt_label3 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形中
-    lv_label_set_text(volt_label3, "#00FFFF baudRate#");   // 设置文本内容
+    lv_label_set_text(volt_label3, "#006D77 baudRate#");   // 设置文本内容
     lv_obj_set_style_text_font(volt_label3, &lv_font_montserrat_18, 0);
     lv_obj_set_pos(volt_label3, 170, 5);
     lv_label_set_recolor(volt_label3, true);
@@ -1880,6 +2125,7 @@ void wirelessuart_init(void)
     wireless_uart_list = lv_dropdown_create(lv_scr_act());
     lv_obj_set_size(wireless_uart_list, 105, 40);
     lv_obj_set_pos(wireless_uart_list, 170, 30);
+    style_input_surface(wireless_uart_list);
     lv_dropdown_set_options(wireless_uart_list, "");
     lv_dropdown_add_option(wireless_uart_list, "1200", 0);
     lv_dropdown_add_option(wireless_uart_list, "2400", 1);
@@ -1901,12 +2147,14 @@ void wirelessuart_init(void)
     lv_obj_set_pos(wireless_uart_extarea, 6, 75);
     lv_textarea_set_max_length(wireless_uart_extarea, 1024);
     lv_textarea_set_placeholder_text(wireless_uart_extarea, "BLE passthrough monitor");
+    style_input_surface(wireless_uart_extarea);
 
     static lv_style_t wireless_uart_style;
     lv_style_init(&wireless_uart_style);
-    lv_style_set_bg_color(&wireless_uart_style, lv_color_hex(0xFF0000));
-    lv_style_set_border_color(&wireless_uart_style, lv_color_hex(0x000000));
+    lv_style_set_bg_color(&wireless_uart_style, lv_color_hex(UI_COLOR_PRIMARY));
+    lv_style_set_border_color(&wireless_uart_style, lv_color_hex(UI_COLOR_BORDER));
     lv_style_set_border_width(&wireless_uart_style, 2);
+    lv_style_set_text_color(&wireless_uart_style, lv_color_hex(0xFFFFFF));
 
     wireless_uart_btn = lv_btn_create(lv_scr_act());
     lv_obj_add_style(wireless_uart_btn, &wireless_uart_style, 0); // 将样式应用到矩形中
@@ -1922,8 +2170,8 @@ void wirelessuart_init(void)
     lv_obj_t *wireless_uart_clear_btn = lv_btn_create(lv_scr_act());
     lv_obj_set_size(wireless_uart_clear_btn, 65, 52);
     lv_obj_set_pos(wireless_uart_clear_btn, 30, 20);
-    lv_obj_set_style_bg_color(wireless_uart_clear_btn, lv_color_hex(0x696969), 0);
-    lv_obj_set_style_border_color(wireless_uart_clear_btn, lv_color_hex(0x000000), 0);
+    lv_obj_set_style_bg_color(wireless_uart_clear_btn, lv_color_hex(UI_COLOR_ACCENT), 0);
+    lv_obj_set_style_border_color(wireless_uart_clear_btn, lv_color_hex(UI_COLOR_BORDER), 0);
     lv_obj_set_style_border_width(wireless_uart_clear_btn, 2, 0);
     lv_obj_add_event_cb(wireless_uart_clear_btn, wireless_uart_clear_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_t *wireless_uart_clear_label = lv_label_create(wireless_uart_clear_btn);
@@ -1939,7 +2187,7 @@ void FREcount_init(void)
 {
 
     lv_obj_clean(lv_scr_act());
-    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
+    apply_page_bg();
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
 
@@ -1978,13 +2226,13 @@ void FREcount_init(void)
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
 
     lv_obj_t *FREcount_label1 = lv_label_create(lv_scr_act()); // 将文本标签添加到圆角矩形中
-    lv_label_set_text(FREcount_label1, "#FFD700 ROW1#");       // 设置文本内容
+    lv_label_set_text(FREcount_label1, "#A84B00 ROW1#");       // 设置文本内容
     lv_obj_set_style_text_font(FREcount_label1, &lv_font_montserrat_20, 0);
     lv_obj_set_pos(FREcount_label1, 180, 210);
     lv_label_set_recolor(FREcount_label1, true);
 
     lv_obj_t *FREcount_label2 = lv_label_create(lv_scr_act());        // 将文本标签添加到圆角矩形中
-    lv_label_set_text(FREcount_label2, "#00FFFF Frequency Counter#"); // 设置文本内容
+    lv_label_set_text(FREcount_label2, "#006D77 Frequency Counter#"); // 设置文本内容
     lv_obj_set_style_text_font(FREcount_label2, &lv_font_montserrat_24, 0);
     lv_obj_set_pos(FREcount_label2, 15, 26);
     lv_label_set_recolor(FREcount_label2, true);
@@ -1998,7 +2246,7 @@ void FREcount_init(void)
     lv_obj_t *Hz_label = lv_label_create(lv_scr_act());
     lv_obj_set_style_text_font(Hz_label, &lv_font_montserrat_28, 0);
     lv_obj_set_pos(Hz_label, 236, 110);
-    lv_label_set_text(Hz_label, "#FF0000 Hz#"); // 设置文本内容
+    lv_label_set_text(Hz_label, "#C62828 Hz#"); // 设置文本内容
     lv_label_set_recolor(Hz_label, true);
 
     configure_swipe_back_for_current_screen(true);
@@ -2006,16 +2254,113 @@ void FREcount_init(void)
 
 void readme_init(void)
 {
-
     lv_obj_clean(lv_scr_act());
-    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
+    apply_page_bg();
+    lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
 
-    lv_obj_t *img1 = lv_img_create(lv_scr_act());
-    lv_img_set_src(img1, &kobe_png);                         // Replace with your image variable or path
-    lv_obj_set_size(img1, LV_SIZE_CONTENT, LV_SIZE_CONTENT); // Set image size
-    lv_obj_align(img1, LV_ALIGN_OUT_RIGHT_MID, 0, 0);        // Center the image within the button
+    lv_obj_t *halo = lv_obj_create(lv_scr_act());
+    lv_obj_remove_style_all(halo);
+    lv_obj_set_size(halo, 250, 250);
+    lv_obj_align(halo, LV_ALIGN_CENTER, 0, 4);
+    lv_obj_set_style_radius(halo, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(halo, lv_color_hex(UI_COLOR_PRIMARY_SOFT), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(halo, LV_OPA_20, LV_PART_MAIN);
+    lv_obj_clear_flag(halo, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_scroll_dir(halo, LV_DIR_NONE);
 
-    configure_swipe_back_for_current_screen(true);
+    lv_obj_t *card = lv_obj_create(lv_scr_act());
+    lv_obj_remove_style(card, 0, LV_PART_SCROLLBAR);
+    lv_obj_set_size(card, 286, 214);
+    lv_obj_align(card, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_style_radius(card, 28, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(card, lv_color_hex(UI_COLOR_CARD), LV_PART_MAIN);
+    lv_obj_set_style_border_color(card, lv_color_hex(UI_COLOR_PRIMARY_SOFT), LV_PART_MAIN);
+    lv_obj_set_style_border_width(card, 3, LV_PART_MAIN);
+    lv_obj_set_style_shadow_width(card, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(card, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_scroll_dir(card, LV_DIR_NONE);
+
+    lv_obj_t *accent_bar = lv_obj_create(card);
+    lv_obj_remove_style_all(accent_bar);
+    lv_obj_set_size(accent_bar, 240, 8);
+    lv_obj_align(accent_bar, LV_ALIGN_TOP_MID, 0, 14);
+    lv_obj_set_style_radius(accent_bar, 8, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(accent_bar, lv_color_hex(UI_COLOR_PRIMARY), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(accent_bar, LV_OPA_80, LV_PART_MAIN);
+
+    lv_obj_t *header = lv_obj_create(card);
+    lv_obj_remove_style_all(header);
+    lv_obj_set_size(header, 236, 60);
+    lv_obj_align(header, LV_ALIGN_TOP_MID, 0, 34);
+
+    lv_obj_t *badge = lv_obj_create(header);
+    lv_obj_remove_style_all(badge);
+    lv_obj_set_size(badge, 50, 50);
+    lv_obj_align(badge, LV_ALIGN_LEFT_MID, 2, 0);
+    lv_obj_set_style_radius(badge, 16, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(badge, lv_color_hex(UI_COLOR_PRIMARY), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(badge, LV_OPA_20, LV_PART_MAIN);
+
+    lv_obj_t *badge_text = lv_label_create(badge);
+    lv_label_set_text(badge_text, "EX");
+    lv_obj_set_style_text_color(badge_text, lv_color_hex(UI_COLOR_PRIMARY), 0);
+    lv_obj_set_style_text_font(badge_text, &lv_font_montserrat_22, 0);
+    lv_obj_center(badge_text);
+
+    lv_obj_t *title_wrap = lv_obj_create(header);
+    lv_obj_remove_style_all(title_wrap);
+    lv_obj_set_size(title_wrap, 128, 40);
+    lv_obj_align(title_wrap, LV_ALIGN_CENTER, 2, 4);
+
+    lv_obj_t *title = lv_label_create(title_wrap);
+    lv_label_set_text(title, "Exlink Tool");
+    lv_obj_set_style_text_color(title, lv_color_hex(UI_COLOR_TEXT_RED), 0);
+    lv_obj_set_style_text_font(title, &lv_font_montserrat_18, 0);
+    lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 0);
+
+    lv_obj_t *sub = lv_label_create(title_wrap);
+    lv_label_set_text(sub, "Device Information");
+    lv_obj_set_style_text_color(sub, lv_color_hex(UI_COLOR_TEXT_BLUE), 0);
+    lv_obj_set_style_text_font(sub, &lv_font_montserrat_12, 0);
+    lv_obj_align(sub, LV_ALIGN_BOTTOM_MID, 0, 0);
+
+    lv_obj_t *chip = lv_obj_create(header);
+    lv_obj_remove_style(chip, 0, LV_PART_SCROLLBAR);
+    lv_obj_set_size(chip, 42, 20);
+    lv_obj_align(chip, LV_ALIGN_TOP_RIGHT, -2, 2);
+    lv_obj_set_style_radius(chip, 10, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(chip, lv_color_hex(UI_COLOR_SECONDARY_SOFT), LV_PART_MAIN);
+    lv_obj_set_style_border_width(chip, 0, LV_PART_MAIN);
+    lv_obj_set_style_shadow_width(chip, 0, LV_PART_MAIN);
+    lv_obj_t *chip_label = lv_label_create(chip);
+    lv_label_set_text(chip_label, "v2.0");
+    lv_obj_set_style_text_color(chip_label, lv_color_hex(UI_COLOR_TEXT_GREEN), 0);
+    lv_obj_set_style_text_font(chip_label, &lv_font_montserrat_10, 0);
+    lv_obj_center(chip_label);
+
+    lv_obj_t *info_box = lv_obj_create(card);
+    lv_obj_remove_style(info_box, 0, LV_PART_SCROLLBAR);
+    lv_obj_set_size(info_box, 236, 78);
+    lv_obj_align_to(info_box, header, LV_ALIGN_OUT_BOTTOM_MID, 0, 8);
+    lv_obj_set_style_radius(info_box, 18, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(info_box, lv_color_hex(UI_COLOR_BG), LV_PART_MAIN);
+    lv_obj_set_style_border_color(info_box, lv_color_hex(UI_COLOR_ACCENT_SOFT), LV_PART_MAIN);
+    lv_obj_set_style_border_width(info_box, 2, LV_PART_MAIN);
+    lv_obj_set_style_shadow_width(info_box, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(info_box, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_scroll_dir(info_box, LV_DIR_NONE);
+
+    lv_obj_t *info_right = lv_label_create(info_box);
+    lv_label_set_text_fmt(info_right, "MCU: ESP32-S3\nFlash: 16 MB\nDisplay: GC9307 240x284\nWireless: WiFi + BLE\nBuzzer: L%d",
+                          buzzer_volume_level);
+    lv_obj_set_style_text_color(info_right, lv_color_hex(UI_COLOR_TEXT), 0);
+    lv_obj_set_style_text_font(info_right, &lv_font_montserrat_10, 0);
+    lv_obj_set_width(info_right, 208);
+    lv_label_set_long_mode(info_right, LV_LABEL_LONG_WRAP);
+    lv_obj_set_style_text_align(info_right, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_center(info_right);
+
+    configure_swipe_back_for_current_screen(false);
 }
 
 static void setting_volume_slider_event_cb(lv_event_t *e)
@@ -2043,11 +2388,11 @@ static void setting_volume_slider_event_cb(lv_event_t *e)
 void setting_init(void)
 {
     lv_obj_clean(lv_scr_act());
-    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
+    apply_page_bg();
     configure_swipe_back_for_current_screen(false);
 
     lv_obj_t *title = lv_label_create(lv_scr_act());
-    lv_label_set_text(title, "#00FFFF setting#");
+    lv_label_set_text(title, "#006D77 setting#");
     lv_label_set_recolor(title, true);
     lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
     lv_obj_set_pos(title, 12, 16);
@@ -2062,9 +2407,9 @@ void setting_init(void)
     lv_obj_set_pos(volume_slider, 20, 116);
     lv_slider_set_range(volume_slider, 1, 4);
     lv_slider_set_value(volume_slider, buzzer_volume_level, LV_ANIM_OFF);
-    lv_obj_set_style_bg_color(volume_slider, lv_color_hex(0x3A3A3A), LV_PART_MAIN);
-    lv_obj_set_style_bg_color(volume_slider, lv_color_hex(0xFF0000), LV_PART_INDICATOR);
-    lv_obj_set_style_bg_color(volume_slider, lv_color_hex(0xFFFFFF), LV_PART_KNOB);
+    lv_obj_set_style_bg_color(volume_slider, lv_color_hex(UI_COLOR_PRIMARY_SOFT), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(volume_slider, lv_color_hex(UI_COLOR_PRIMARY), LV_PART_INDICATOR);
+    lv_obj_set_style_bg_color(volume_slider, lv_color_hex(UI_COLOR_CARD), LV_PART_KNOB);
 
     lv_obj_t *value_label = lv_label_create(lv_scr_act());
     lv_label_set_text_fmt(value_label, "L%d", buzzer_volume_level);
@@ -2088,7 +2433,7 @@ void setting_init(void)
     lv_obj_t *tip_label = lv_label_create(lv_scr_act());
     lv_label_set_text(tip_label, "Double click PUSH to back");
     lv_obj_set_style_text_font(tip_label, &lv_font_montserrat_14, 0);
-    lv_obj_set_style_text_color(tip_label, lv_color_hex(0xAAAAAA), 0);
+    lv_obj_set_style_text_color(tip_label, lv_color_hex(UI_COLOR_MUTED), 0);
     lv_obj_set_pos(tip_label, 12, 205);
 
     configure_swipe_back_for_current_screen(false);
@@ -2097,7 +2442,7 @@ void setting_init(void)
 void ui_init(void)
 {
     // 设置显示主题
-    lv_theme_default_init(NULL, lv_color_hex(0x000000), lv_color_hex(0xFF0000), LV_THEME_DEFAULT_DARK, NULL);
+    lv_theme_default_init(NULL, lv_color_hex(UI_COLOR_BG), lv_color_hex(UI_COLOR_PRIMARY), false, NULL);
     lv_obj_add_event_cb(lv_scr_act(), longpress_event_handler_back, LV_EVENT_LONG_PRESSED, NULL);
     create_boot_animation();
 

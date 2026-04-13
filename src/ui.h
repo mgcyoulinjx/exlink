@@ -90,6 +90,7 @@ extern "C"
 
     extern int DSO_flag;
     extern int adcValues[SAMPLE_COUNT]; // Store ADC values
+    extern bool i2cscan_requested;
 
     lv_timer_t *DSO_adddata_timer;
     lv_obj_t *DSO_chart;
