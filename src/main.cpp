@@ -17,11 +17,14 @@
 #include <BLE2902.h>
 #include <esp_task_wdt.h>
 #include <Preferences.h>
+#include <math.h>
+
+extern "C" void longpress_event_handler_back(lv_event_t *e);
 
 #define I2C_SDA 18 // 触摸SDA引脚
 #define I2C_SCL 21 // 触摸SCL引脚
 #define RST_N_PIN 16
-#define INT_N_PIN 18
+#define INT_N_PIN -1
 #define RIGHT_PIN 38
 #define LEFT_PIN 39
 #define PUSH_PIN 40
@@ -64,10 +67,31 @@ int DSO_flag = 0;
 int BluetoothSerial_flag = 0;
 int FREcount_flag = 0;
 int buzzer_volume_level = 3;
+ui_theme_mode_t g_ui_theme_mode = UI_THEME_LIGHT;
+int g_touch_debug_x = -1;
+int g_touch_debug_y = -1;
+int g_touch_debug_raw_x = -1;
+int g_touch_debug_raw_y = -1;
+int g_touch_debug_rotated_x = -1;
+int g_touch_debug_rotated_y = -1;
+bool g_touch_debug_pressed = false;
+
+typedef struct
+{
+  bool valid;
+  float raw_x[25];
+  float raw_y[25];
+} touch_calibration_t;
+
 static Preferences app_preferences;
 static bool preferences_ready = false;
 static const char *PREF_NAMESPACE = "exlink";
 static const char *PREF_KEY_BUZZER_VOLUME = "buzzer_vol";
+static const char *PREF_KEY_THEME_MODE = "theme_mode";
+static const char *PREF_KEY_TOUCH_CAL_OK = "touch_cal_ok";
+static const char *PREF_KEY_TOUCH_CAL_VER = "touch_cal_v";
+static const uint8_t TOUCH_CALIBRATION_VERSION = 7;
+static const char *PREF_KEY_TOUCH_CAL_DATA = "touch_cal_data";
 
 int pwm_Freq = 0;
 int pwm_Duty = 0;
@@ -95,8 +119,14 @@ static void sync_i2c_scan_button_visual()
 byte error, address;
 int nDevices;
 // 在这里设置屏幕尺寸
-static const uint32_t screenWidth = TFT_WIDTH;
-static const uint32_t screenHeight = TFT_HEIGHT;
+static const uint32_t screenWidth = TFT_HEIGHT;
+static const uint32_t screenHeight = TFT_WIDTH;
+static const int32_t kTouchRawXMin = 0;
+static const int32_t kTouchRawXMax = TouchHeight - 1;
+static const int32_t kTouchRawYMin = 0;
+static const int32_t kTouchRawYMax = TouchWidth - 1;
+static const int32_t kTouchCalibrationMinSpan = 40;
+static touch_calibration_t g_touch_calibration = {false, {0}, {0}};
 // lvgl显示存储数组
 static lv_disp_draw_buf_t draw_buf;
 static lv_color_t buf[screenWidth * screenHeight / 2];
@@ -319,6 +349,16 @@ extern "C" void persist_buzzer_volume_level(int level)
   }
 }
 
+extern "C" void persist_theme_mode(int mode)
+{
+  ui_theme_mode_t resolved_mode = mode == UI_THEME_DARK ? UI_THEME_DARK : UI_THEME_LIGHT;
+  g_ui_theme_mode = resolved_mode;
+  if (preferences_ready)
+  {
+    app_preferences.putUChar(PREF_KEY_THEME_MODE, (uint8_t)resolved_mode);
+  }
+}
+
 static void load_buzzer_volume_level()
 {
   if (!preferences_ready)
@@ -332,6 +372,328 @@ static void load_buzzer_volume_level()
     stored_level = 3;
   }
   buzzer_volume_level = stored_level;
+}
+
+static void load_theme_mode()
+{
+  if (!preferences_ready)
+  {
+    return;
+  }
+
+  int stored_mode = app_preferences.getUChar(PREF_KEY_THEME_MODE, UI_THEME_LIGHT);
+  if (stored_mode != UI_THEME_LIGHT && stored_mode != UI_THEME_DARK)
+  {
+    stored_mode = UI_THEME_LIGHT;
+  }
+  g_ui_theme_mode = (ui_theme_mode_t)stored_mode;
+}
+
+static void reset_touch_calibration_defaults()
+{
+  g_touch_calibration.valid = false;
+  for (int i = 0; i < 25; i++)
+  {
+    int col = i % 5;
+    int row = i / 5;
+    g_touch_calibration.raw_x[i] = kTouchRawXMin + col * (kTouchRawXMax - kTouchRawXMin) / 4.0f;
+    g_touch_calibration.raw_y[i] = kTouchRawYMin + row * (kTouchRawYMax - kTouchRawYMin) / 4.0f;
+  }
+}
+
+static bool sanitize_touch_calibration(touch_calibration_t *calibration)
+{
+  if (!calibration)
+  {
+    return false;
+  }
+
+  for (int i = 0; i < 25; i++)
+  {
+    if (!isfinite(calibration->raw_x[i]) || !isfinite(calibration->raw_y[i]))
+    {
+      return false;
+    }
+  }
+
+  // Verify monotonicity to ensure the grid doesn't fold onto itself
+  for (int row = 0; row < 5; row++)
+  {
+    for (int col = 0; col < 4; col++)
+    {
+      int idx1 = row * 5 + col;
+      int idx2 = row * 5 + col + 1;
+      if (calibration->raw_x[idx1] >= calibration->raw_x[idx2])
+      {
+        return false;
+      }
+    }
+  }
+
+  for (int col = 0; col < 5; col++)
+  {
+    for (int row = 0; row < 4; row++)
+    {
+      int idx1 = row * 5 + col;
+      int idx2 = (row + 1) * 5 + col;
+      if (calibration->raw_y[idx1] >= calibration->raw_y[idx2])
+      {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+extern "C" void clear_touch_calibration()
+{
+  reset_touch_calibration_defaults();
+  if (!preferences_ready)
+  {
+    return;
+  }
+
+  app_preferences.putBool(PREF_KEY_TOUCH_CAL_OK, false);
+  app_preferences.putUChar(PREF_KEY_TOUCH_CAL_VER, 0);
+}
+
+static float touch_lerp(float a, float b, float t)
+{
+  return a + (b - a) * t;
+}
+
+static bool solve_touch_edge_mapping(const touch_calibration_t *calibration,
+                                     int32_t raw_x,
+                                     int32_t raw_y,
+                                     float *x_norm_out,
+                                     float *y_norm_out)
+{
+  if (!calibration || !x_norm_out || !y_norm_out)
+  {
+    return false;
+  }
+
+  // 1. Estimate grid cell based on bounding box
+  float min_x = 10000.0f, max_x = -10000.0f;
+  float min_y = 10000.0f, max_y = -10000.0f;
+  for (int i = 0; i < 25; i++)
+  {
+    if (calibration->raw_x[i] < min_x) min_x = calibration->raw_x[i];
+    if (calibration->raw_x[i] > max_x) max_x = calibration->raw_x[i];
+    if (calibration->raw_y[i] < min_y) min_y = calibration->raw_y[i];
+    if (calibration->raw_y[i] > max_y) max_y = calibration->raw_y[i];
+  }
+  if (max_x <= min_x) max_x = min_x + 1.0f;
+  if (max_y <= min_y) max_y = min_y + 1.0f;
+
+  float global_u = constrain((raw_x - min_x) / (max_x - min_x), 0.0f, 0.999f);
+  float global_v = constrain((raw_y - min_y) / (max_y - min_y), 0.0f, 0.999f);
+
+  int cell_col = constrain((int)(global_u * 4), 0, 3);
+  int cell_row = constrain((int)(global_v * 4), 0, 3);
+
+  // 2. Extract 4 corners of the selected cell
+  int idx_tl = cell_row * 5 + cell_col;
+  int idx_tr = cell_row * 5 + cell_col + 1;
+  int idx_bl = (cell_row + 1) * 5 + cell_col;
+  int idx_br = (cell_row + 1) * 5 + cell_col + 1;
+
+  float x00 = calibration->raw_x[idx_tl], y00 = calibration->raw_y[idx_tl];
+  float x10 = calibration->raw_x[idx_tr], y10 = calibration->raw_y[idx_tr];
+  float x01 = calibration->raw_x[idx_bl], y01 = calibration->raw_y[idx_bl];
+  float x11 = calibration->raw_x[idx_br], y11 = calibration->raw_y[idx_br];
+
+  // 3. Inverse Bilinear Interpolation (Newton-Raphson) to find local (u, v) in [0, 1]
+  float u = 0.5f, v = 0.5f; // Initial guess
+  for (int iter = 0; iter < 10; iter++)
+  {
+    // Current point at (u, v)
+    float cur_x = (1 - u) * (1 - v) * x00 + u * (1 - v) * x10 + (1 - u) * v * x01 + u * v * x11;
+    float cur_y = (1 - u) * (1 - v) * y00 + u * (1 - v) * y10 + (1 - u) * v * y01 + u * v * y11;
+
+    // Jacobian matrix components (derivatives)
+    float dx_du = (1 - v) * (x10 - x00) + v * (x11 - x01);
+    float dx_dv = (1 - u) * (x01 - x00) + u * (x11 - x10);
+    float dy_du = (1 - v) * (y10 - y00) + v * (y11 - y01);
+    float dy_dv = (1 - u) * (y01 - y00) + u * (y11 - y10);
+
+    float det = dx_du * dy_dv - dx_dv * dy_du;
+    if (fabsf(det) < 1e-6f)
+    {
+      break; // Singularity, fallback to current guess
+    }
+
+    // Compute error
+    float err_x = raw_x - cur_x;
+    float err_y = raw_y - cur_y;
+
+    // Invert Jacobian to update u, v
+    float du = (dy_dv * err_x - dx_dv * err_y) / det;
+    float dv = (-dy_du * err_x + dx_du * err_y) / det;
+
+    u += du;
+    v += dv;
+
+    // We do NOT tightly constrain u and v here. They must be allowed to go outside
+    // [0, 1] to extrapolate for points near the physical screen edge that fall outside
+    // the mathematical centers of the outermost calibration points.
+    // If we clamp them, points outside the 5x5 grid centers become dead zones.
+
+    if (fabsf(du) < 1e-4f && fabsf(dv) < 1e-4f)
+    {
+      break;
+    }
+  }
+
+  // 4. Map local (u, v) back to global screen normalized coordinates
+  // We use the cell index (cell_col, cell_row) and add the local offsets (u, v).
+  // This allows mapping to extend smoothly up to the screen borders.
+  *x_norm_out = constrain((cell_col + u) / 4.0f, 0.0f, 1.0f);
+  *y_norm_out = constrain((cell_row + v) / 4.0f, 0.0f, 1.0f);
+
+  return true;
+}
+
+static bool validate_touch_calibration(const touch_calibration_t *calibration,
+                                       const lv_point_t *raw_points,
+                                       const lv_point_t *target_points,
+                                       uint8_t point_count)
+{
+  if (!calibration || !raw_points || !target_points || point_count < 25)
+  {
+    return false;
+  }
+
+  // With a local 25-point piece-wise mapping, interpolation error on the exact sample points
+  // should theoretically be very close to zero. We'll allow a small threshold for floating point
+  // inaccuracies, but this doesn't need the large error bounds of a global affine model.
+  float error_sum = 0.0f;
+  float max_axis_error = 0.0f;
+  for (uint8_t idx = 0; idx < point_count; idx++)
+  {
+    float x_norm = 0.0f;
+    float y_norm = 0.0f;
+    if (!solve_touch_edge_mapping(calibration, raw_points[idx].x, raw_points[idx].y, &x_norm, &y_norm))
+    {
+      return false;
+    }
+
+    float screen_x = x_norm * (float)(screenWidth - 1);
+    float screen_y = y_norm * (float)(screenHeight - 1);
+    float error_x = screen_x - (float)target_points[idx].x;
+    float error_y = screen_y - (float)target_points[idx].y;
+    float abs_error_x = fabsf(error_x);
+    float abs_error_y = fabsf(error_y);
+    if (abs_error_x > max_axis_error)
+    {
+      max_axis_error = abs_error_x;
+    }
+    if (abs_error_y > max_axis_error)
+    {
+      max_axis_error = abs_error_y;
+    }
+    error_sum += error_x * error_x + error_y * error_y;
+  }
+
+  // 15px max error is generous given that the sample points ARE the control points.
+  // This just guards against complete model failures.
+  float rms_error = sqrtf(error_sum / (float)point_count);
+  return max_axis_error <= 15.0f && rms_error <= 10.0f;
+}
+
+extern "C" bool persist_touch_calibration_points(const lv_point_t *raw_points,
+                                                  const lv_point_t *target_points,
+                                                  uint8_t point_count)
+{
+  if (!raw_points || !target_points || point_count < 25)
+  {
+    return false;
+  }
+
+  touch_calibration_t calibration;
+  calibration.valid = true;
+  for (int i = 0; i < 25; i++)
+  {
+    calibration.raw_x[i] = (float)raw_points[i].x;
+    calibration.raw_y[i] = (float)raw_points[i].y;
+  }
+
+  // Fix monotonicity to ensure the grid doesn't fold onto itself
+  // Due to edge dead zones, adjacent points might report the exact same raw coordinate.
+  // We forcefully separate them by a small epsilon to prevent singular Jacobians.
+  for (int row = 0; row < 5; row++)
+  {
+    for (int col = 0; col < 4; col++)
+    {
+      int idx1 = row * 5 + col;
+      int idx2 = row * 5 + col + 1;
+      if (calibration.raw_x[idx2] <= calibration.raw_x[idx1] + 1.0f)
+      {
+        calibration.raw_x[idx2] = calibration.raw_x[idx1] + 1.0f;
+      }
+    }
+  }
+
+  for (int col = 0; col < 5; col++)
+  {
+    for (int row = 0; row < 4; row++)
+    {
+      int idx1 = row * 5 + col;
+      int idx2 = (row + 1) * 5 + col;
+      if (calibration.raw_y[idx2] <= calibration.raw_y[idx1] + 1.0f)
+      {
+        calibration.raw_y[idx2] = calibration.raw_y[idx1] + 1.0f;
+      }
+    }
+  }
+
+  if (!sanitize_touch_calibration(&calibration) ||
+      !validate_touch_calibration(&calibration, raw_points, target_points, point_count))
+  {
+    return false;
+  }
+
+  g_touch_calibration = calibration;
+  g_touch_calibration.valid = true;
+
+  if (!preferences_ready)
+  {
+    return true;
+  }
+
+  app_preferences.putBytes(PREF_KEY_TOUCH_CAL_DATA, &g_touch_calibration, sizeof(touch_calibration_t));
+  app_preferences.putUChar(PREF_KEY_TOUCH_CAL_VER, TOUCH_CALIBRATION_VERSION);
+  app_preferences.putBool(PREF_KEY_TOUCH_CAL_OK, true);
+  return true;
+}
+
+static void load_touch_calibration()
+{
+  reset_touch_calibration_defaults();
+  if (!preferences_ready)
+  {
+    return;
+  }
+
+  if (!app_preferences.getBool(PREF_KEY_TOUCH_CAL_OK, false) ||
+      app_preferences.getUChar(PREF_KEY_TOUCH_CAL_VER, 0) != TOUCH_CALIBRATION_VERSION)
+  {
+    clear_touch_calibration();
+    return;
+  }
+
+  touch_calibration_t calibration;
+  size_t read_bytes = app_preferences.getBytes(PREF_KEY_TOUCH_CAL_DATA, &calibration, sizeof(touch_calibration_t));
+
+  if (read_bytes != sizeof(touch_calibration_t) || !sanitize_touch_calibration(&calibration))
+  {
+    clear_touch_calibration();
+    return;
+  }
+
+  g_touch_calibration = calibration;
+  g_touch_calibration.valid = true;
 }
 
 void buzzer_beep() // 触发蜂鸣器（非阻塞）
@@ -524,7 +886,7 @@ void keypad_read(lv_indev_drv_t *indev_drv, lv_indev_data_t *data) // 按键扫�
         if (last_push_click_time != 0 && (now - last_push_click_time) <= DOUBLE_CLICK_THRESHOLD)
         {
           buzzer_beep();
-          lv_event_send(lv_scr_act(), LV_EVENT_LONG_PRESSED, NULL);
+          longpress_event_handler_back(NULL);
           last_push_click_time = 0;
         }
         else
@@ -735,21 +1097,93 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
 // 触摸屏回调函数
 void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 {
+  (void)indev_driver;
   TouchInfos tp;
   tp = cst816t.GetTouchInfo();
-  bool touched = tp.touching;
+  bool touched = tp.touching && tp.isValid;
   if (!touched)
   {
     data->state = LV_INDEV_STATE_REL;
-    // Serial.println("NO TOUCH");
+    g_touch_debug_pressed = false;
+    return;
   }
-  if (touched)
+
+  int raw_x = tp.x;
+  int raw_y = tp.y;
+  if (raw_x < 0)
   {
-    data->state = LV_INDEV_STATE_PR;
-    data->point.x = tp.y;
-    data->point.y = TFT_WIDTH - tp.x;
-    // Serial.println("TOUCHING");
+    raw_x = 0;
   }
+  else if (raw_x >= TouchWidth)
+  {
+    raw_x = TouchWidth - 1;
+  }
+
+  if (raw_y < 0)
+  {
+    raw_y = 0;
+  }
+  else if (raw_y >= TouchHeight)
+  {
+    raw_y = TouchHeight - 1;
+  }
+
+  int rotated_x = raw_y;
+  int rotated_y = kTouchRawYMax - raw_x;
+
+  if (rotated_x < kTouchRawXMin)
+  {
+    rotated_x = kTouchRawXMin;
+  }
+  else if (rotated_x > kTouchRawXMax)
+  {
+    rotated_x = kTouchRawXMax;
+  }
+
+  if (rotated_y < kTouchRawYMin)
+  {
+    rotated_y = kTouchRawYMin;
+  }
+  else if (rotated_y > kTouchRawYMax)
+  {
+    rotated_y = kTouchRawYMax;
+  }
+
+  int screen_x = map(rotated_x,
+                     kTouchRawXMin,
+                     kTouchRawXMax,
+                     0,
+                     screenWidth - 1);
+  int screen_y = map(rotated_y,
+                     kTouchRawYMin,
+                     kTouchRawYMax,
+                     0,
+                     screenHeight - 1);
+
+  if (g_touch_calibration.valid)
+  {
+    float x_norm = 0.0f;
+    float y_norm = 0.0f;
+    if (solve_touch_edge_mapping(&g_touch_calibration, rotated_x, rotated_y, &x_norm, &y_norm))
+    {
+      screen_x = (int)lroundf(x_norm * (float)(screenWidth - 1));
+      screen_y = (int)lroundf(y_norm * (float)(screenHeight - 1));
+    }
+  }
+
+  screen_x = constrain(screen_x, 0, screenWidth - 1);
+  screen_y = constrain(screen_y, 0, screenHeight - 1);
+
+  data->state = LV_INDEV_STATE_PR;
+  data->point.x = screen_x;
+  data->point.y = screen_y;
+  g_touch_debug_raw_x = raw_x;
+  g_touch_debug_raw_y = raw_y;
+  g_touch_debug_rotated_x = rotated_x;
+  g_touch_debug_rotated_y = rotated_y;
+  g_touch_debug_x = screen_x;
+  g_touch_debug_y = screen_y;
+  g_touch_debug_pressed = true;
 }
 
 // 定时器中断服务函数
@@ -774,6 +1208,8 @@ void setup()
   Serial.begin(115200);
   preferences_ready = app_preferences.begin(PREF_NAMESPACE, false);
   load_buzzer_volume_level();
+  load_theme_mode();
+  load_touch_calibration();
   pinMode(1, OUTPUT);
   digitalWrite(1, LOW);
   pinMode(3, OUTPUT);
@@ -788,7 +1224,6 @@ void setup()
   // analogSetPinAttenuation(4, ADC_11db); 
   tft.init();
   tft.setRotation(3); // 设置显示方向
-  // cst816t.begin();    // 初始化触摸屏
 
   lv_init();
   lv_disp_draw_buf_init(&draw_buf, buf, NULL, screenWidth * screenHeight / 2);
@@ -823,6 +1258,7 @@ void setup()
 
   ledcWrite(1, 3);
   Wire.begin(18, 21);
+  cst816t.begin();
   uint8_t devicesFound = 0;
   while (deviceNumber == UINT8_MAX)
   {

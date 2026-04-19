@@ -17,6 +17,34 @@ extern "C"
 #else
 #include "lvgl.h"
 #endif
+#include <stdbool.h>
+
+    typedef enum
+    {
+        UI_THEME_LIGHT = 0,
+        UI_THEME_DARK = 1,
+    } ui_theme_mode_t;
+
+    typedef enum
+    {
+        UI_PAGE_BOOT = 0,
+        UI_PAGE_MAIN,
+        UI_PAGE_PINMAP,
+        UI_PAGE_POWER,
+        UI_PAGE_PWM,
+        UI_PAGE_UART,
+        UI_PAGE_I2C,
+        UI_PAGE_VOLTMETER,
+        UI_PAGE_DSO,
+        UI_PAGE_WIRELESS_UART,
+        UI_PAGE_FRECOUNT,
+        UI_PAGE_README,
+        UI_PAGE_SETTING,
+        UI_PAGE_TOUCH_CALIBRATION,
+    } ui_page_id_t;
+
+    extern ui_theme_mode_t g_ui_theme_mode;
+    extern ui_page_id_t g_current_page;
 
     extern int ina266_flag;
     char batStr[20];
@@ -101,7 +129,20 @@ extern "C"
     extern int saved_scroll_y;
     extern int saved_focused_index;
     extern int buzzer_volume_level;
+    extern int g_touch_debug_x;
+    extern int g_touch_debug_y;
+    extern int g_touch_debug_raw_x;
+    extern int g_touch_debug_raw_y;
+    extern int g_touch_debug_rotated_x;
+    extern int g_touch_debug_rotated_y;
+    extern bool g_touch_debug_pressed;
     void persist_buzzer_volume_level(int level);
+    void persist_theme_mode(int mode);
+    bool persist_touch_calibration_points(const lv_point_t *raw_points, const lv_point_t *target_points, uint8_t point_count);
+    void clear_touch_calibration(void);
+    void ui_set_current_page(ui_page_id_t page);
+    void ui_rebuild_current_page(void);
+    void ui_apply_theme_mode(ui_theme_mode_t mode, bool persist);
 
     LV_IMG_DECLARE(ui_img_game3_png);
     LV_IMG_DECLARE(Exlink_png);
@@ -134,6 +175,7 @@ extern "C"
     void FREcount_init(void);
     void readme_init(void);
     void setting_init(void);
+    void touch_calibration_init(void);
 
 #ifdef __cplusplus
 } /*extern "C"*/

@@ -5,6 +5,80 @@
 int saved_scroll_y = 0;
 int saved_focused_index = -1;
 
+static lv_obj_t *setting_touch_debug_dot = NULL;
+static lv_obj_t *setting_touch_debug_label = NULL;
+static lv_timer_t *setting_touch_debug_timer = NULL;
+
+typedef enum
+{
+    TOUCH_CAL_STEP_INTRO = 0,
+    TOUCH_CAL_STEP_0,
+    TOUCH_CAL_STEP_1,
+    TOUCH_CAL_STEP_2,
+    TOUCH_CAL_STEP_3,
+    TOUCH_CAL_STEP_4,
+    TOUCH_CAL_STEP_5,
+    TOUCH_CAL_STEP_6,
+    TOUCH_CAL_STEP_7,
+    TOUCH_CAL_STEP_8,
+    TOUCH_CAL_STEP_9,
+    TOUCH_CAL_STEP_10,
+    TOUCH_CAL_STEP_11,
+    TOUCH_CAL_STEP_12,
+    TOUCH_CAL_STEP_13,
+    TOUCH_CAL_STEP_14,
+    TOUCH_CAL_STEP_15,
+    TOUCH_CAL_STEP_16,
+    TOUCH_CAL_STEP_17,
+    TOUCH_CAL_STEP_18,
+    TOUCH_CAL_STEP_19,
+    TOUCH_CAL_STEP_20,
+    TOUCH_CAL_STEP_21,
+    TOUCH_CAL_STEP_22,
+    TOUCH_CAL_STEP_23,
+    TOUCH_CAL_STEP_24,
+    TOUCH_CAL_STEP_VERIFY,
+} touch_calibration_step_t;
+
+static const touch_calibration_step_t kTouchCalibrationCaptureSteps[] = {
+    TOUCH_CAL_STEP_0, TOUCH_CAL_STEP_1, TOUCH_CAL_STEP_2, TOUCH_CAL_STEP_3, TOUCH_CAL_STEP_4,
+    TOUCH_CAL_STEP_5, TOUCH_CAL_STEP_6, TOUCH_CAL_STEP_7, TOUCH_CAL_STEP_8, TOUCH_CAL_STEP_9,
+    TOUCH_CAL_STEP_10, TOUCH_CAL_STEP_11, TOUCH_CAL_STEP_12, TOUCH_CAL_STEP_13, TOUCH_CAL_STEP_14,
+    TOUCH_CAL_STEP_15, TOUCH_CAL_STEP_16, TOUCH_CAL_STEP_17, TOUCH_CAL_STEP_18, TOUCH_CAL_STEP_19,
+    TOUCH_CAL_STEP_20, TOUCH_CAL_STEP_21, TOUCH_CAL_STEP_22, TOUCH_CAL_STEP_23, TOUCH_CAL_STEP_24,
+};
+
+static const char *const kTouchCalibrationStepLabels[25] = {
+    "P0(0,0)", "P1(1,0)", "P2(2,0)", "P3(3,0)", "P4(4,0)",
+    "P5(0,1)", "P6(1,1)", "P7(2,1)", "P8(3,1)", "P9(4,1)",
+    "P10(0,2)", "P11(1,2)", "P12(2,2)", "P13(3,2)", "P14(4,2)",
+    "P15(0,3)", "P16(1,3)", "P17(2,3)", "P18(3,3)", "P19(4,3)",
+    "P20(0,4)", "P21(1,4)", "P22(2,4)", "P23(3,4)", "P24(4,4)",
+};
+
+static touch_calibration_step_t g_touch_calibration_step = TOUCH_CAL_STEP_INTRO;
+static lv_timer_t *touch_calibration_timer = NULL;
+static lv_obj_t *touch_calibration_target = NULL;
+static lv_obj_t *touch_calibration_hint_label = NULL;
+static lv_obj_t *touch_calibration_status_label = NULL;
+static lv_obj_t *touch_calibration_debug_label = NULL;
+static lv_obj_t *touch_calibration_dot = NULL;
+static lv_obj_t *touch_calibration_primary_btn = NULL;
+static lv_obj_t *touch_calibration_secondary_btn = NULL;
+static lv_obj_t *touch_calibration_tertiary_btn = NULL;
+static lv_obj_t *touch_calibration_quaternary_btn = NULL;
+static lv_obj_t *touch_calibration_quinary_btn = NULL;
+static bool touch_calibration_waiting_release = false;
+static uint32_t touch_calibration_step_enter_ms = 0;
+static int32_t touch_calibration_sum_x[25];
+static int32_t touch_calibration_sum_y[25];
+static uint8_t touch_calibration_sample_count[25];
+static lv_coord_t touch_calibration_screen_w = 240;
+static lv_coord_t touch_calibration_screen_h = 284;
+static const uint8_t kTouchCalibrationPointCount = 25;
+static const uint8_t kTouchCalibrationSamplesPerPoint = 6;
+static const uint32_t kTouchCalibrationStepDelayMs = 350;
+
 static int32_t get_saved_slider_value(void) {
     if (saved_focused_index >= 1 && saved_focused_index <= 11) {
         return 12 - saved_focused_index;
@@ -78,23 +152,96 @@ lv_style_t style_rect;
 
 extern double v, a, w;
 
-#define UI_COLOR_BG 0xFFF7E8
-#define UI_COLOR_PANEL 0xFFFDF6
-#define UI_COLOR_CARD 0xFFFFFF
-#define UI_COLOR_PRIMARY 0xFF7A00
-#define UI_COLOR_PRIMARY_SOFT 0xFFD39A
-#define UI_COLOR_SECONDARY 0x16C47F
-#define UI_COLOR_SECONDARY_SOFT 0xB8F5D1
-#define UI_COLOR_ACCENT 0x2F89FC
-#define UI_COLOR_ACCENT_SOFT 0xB9DDFF
-#define UI_COLOR_BORDER 0xFFB347
-#define UI_COLOR_TEXT 0x2D2A26
-#define UI_COLOR_MUTED 0x7B6F66
-#define UI_COLOR_TEXT_WARM 0xA84B00
-#define UI_COLOR_TEXT_COOL 0x006D77
-#define UI_COLOR_TEXT_BLUE 0x1D4ED8
-#define UI_COLOR_TEXT_GREEN 0x17803D
-#define UI_COLOR_TEXT_RED 0xC62828
+ui_page_id_t g_current_page = UI_PAGE_BOOT;
+
+typedef struct
+{
+    uint32_t bg;
+    uint32_t panel;
+    uint32_t card;
+    uint32_t primary;
+    uint32_t primary_soft;
+    uint32_t secondary;
+    uint32_t secondary_soft;
+    uint32_t accent;
+    uint32_t accent_soft;
+    uint32_t border;
+    uint32_t text;
+    uint32_t muted;
+    uint32_t text_warm;
+    uint32_t text_cool;
+    uint32_t text_blue;
+    uint32_t text_green;
+    uint32_t text_red;
+} ui_palette_t;
+
+static const ui_palette_t kLightPalette = {
+    .bg = 0xFFF7E8,
+    .panel = 0xFFFDF6,
+    .card = 0xFFFFFF,
+    .primary = 0xFF7A00,
+    .primary_soft = 0xFFD39A,
+    .secondary = 0x16C47F,
+    .secondary_soft = 0xB8F5D1,
+    .accent = 0x2F89FC,
+    .accent_soft = 0xB9DDFF,
+    .border = 0xFFB347,
+    .text = 0x2D2A26,
+    .muted = 0x7B6F66,
+    .text_warm = 0xA84B00,
+    .text_cool = 0x006D77,
+    .text_blue = 0x1D4ED8,
+    .text_green = 0x17803D,
+    .text_red = 0xC62828,
+};
+
+static const ui_palette_t kDarkPalette = {
+    .bg = 0x121212,
+    .panel = 0x1B1B1B,
+    .card = 0x232323,
+    .primary = 0xFF9A3D,
+    .primary_soft = 0x5A3A18,
+    .secondary = 0x35D39A,
+    .secondary_soft = 0x1E4A39,
+    .accent = 0x63A8FF,
+    .accent_soft = 0x1F3554,
+    .border = 0x4C3B2A,
+    .text = 0xF5F1EB,
+    .muted = 0xB5AEA5,
+    .text_warm = 0xFFB566,
+    .text_cool = 0x72D2DF,
+    .text_blue = 0x7DB2FF,
+    .text_green = 0x52D88F,
+    .text_red = 0xFF8A80,
+};
+
+static const ui_palette_t *ui_get_palette(void)
+{
+    return g_ui_theme_mode == UI_THEME_DARK ? &kDarkPalette : &kLightPalette;
+}
+
+#define UI_COLOR_BG (ui_get_palette()->bg)
+#define UI_COLOR_PANEL (ui_get_palette()->panel)
+#define UI_COLOR_CARD (ui_get_palette()->card)
+#define UI_COLOR_PRIMARY (ui_get_palette()->primary)
+#define UI_COLOR_PRIMARY_SOFT (ui_get_palette()->primary_soft)
+#define UI_COLOR_SECONDARY (ui_get_palette()->secondary)
+#define UI_COLOR_SECONDARY_SOFT (ui_get_palette()->secondary_soft)
+#define UI_COLOR_ACCENT (ui_get_palette()->accent)
+#define UI_COLOR_ACCENT_SOFT (ui_get_palette()->accent_soft)
+#define UI_COLOR_BORDER (ui_get_palette()->border)
+#define UI_COLOR_TEXT (ui_get_palette()->text)
+#define UI_COLOR_MUTED (ui_get_palette()->muted)
+#define UI_COLOR_TEXT_WARM (ui_get_palette()->text_warm)
+#define UI_COLOR_TEXT_COOL (ui_get_palette()->text_cool)
+#define UI_COLOR_TEXT_BLUE (ui_get_palette()->text_blue)
+#define UI_COLOR_TEXT_GREEN (ui_get_palette()->text_green)
+#define UI_COLOR_TEXT_RED (ui_get_palette()->text_red)
+
+void ui_set_current_page(ui_page_id_t page)
+{
+    g_current_page = page;
+}
 
 static void apply_page_bg(void)
 {
@@ -157,6 +304,78 @@ static void style_menu_entry_label(lv_obj_t *label, const lv_font_t *font)
     lv_obj_set_style_text_color(label, lv_color_hex(UI_COLOR_TEXT), 0);
     lv_obj_set_style_text_font(label, font, 0);
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_LEFT, 0);
+}
+
+void ui_rebuild_current_page(void)
+{
+    switch (g_current_page)
+    {
+    case UI_PAGE_MAIN:
+        ui_Screen1_screen_init();
+        break;
+    case UI_PAGE_PINMAP:
+        pinmap_init();
+        break;
+    case UI_PAGE_POWER:
+        power_init();
+        break;
+    case UI_PAGE_PWM:
+        pwm_init();
+        break;
+    case UI_PAGE_UART:
+        uarthelper_init();
+        break;
+    case UI_PAGE_I2C:
+        i2c_init();
+        break;
+    case UI_PAGE_VOLTMETER:
+        voltmeter_init();
+        break;
+    case UI_PAGE_DSO:
+        DSO_init();
+        break;
+    case UI_PAGE_WIRELESS_UART:
+        wirelessuart_init();
+        break;
+    case UI_PAGE_FRECOUNT:
+        FREcount_init();
+        break;
+    case UI_PAGE_README:
+        readme_init();
+        break;
+    case UI_PAGE_SETTING:
+        setting_init();
+        break;
+    case UI_PAGE_TOUCH_CALIBRATION:
+        touch_calibration_init();
+        break;
+    case UI_PAGE_BOOT:
+    default:
+        ui_Screen1_screen_init();
+        break;
+    }
+}
+
+void ui_apply_theme_mode(ui_theme_mode_t mode, bool persist)
+{
+    g_ui_theme_mode = mode == UI_THEME_DARK ? UI_THEME_DARK : UI_THEME_LIGHT;
+
+    lv_theme_default_init(
+        NULL,
+        lv_color_hex(UI_COLOR_BG),
+        lv_color_hex(UI_COLOR_PRIMARY),
+        g_ui_theme_mode == UI_THEME_DARK,
+        NULL);
+
+    if (persist)
+    {
+        persist_theme_mode((int)g_ui_theme_mode);
+    }
+
+    if (g_current_page != UI_PAGE_BOOT)
+    {
+        ui_rebuild_current_page();
+    }
 }
 
 void update_label_timer1(lv_timer_t *timer)
@@ -584,6 +803,7 @@ void create_boot_animation(void)
 
 void ui_Screen1_screen_init(void) // 创建主界面
 {
+    ui_set_current_page(UI_PAGE_MAIN);
     lv_obj_clean(lv_scr_act());
     set_swipe_back_enabled(true);
     apply_page_bg();
@@ -869,6 +1089,7 @@ void ui_Screen1_screen_init(void) // 创建主界面
 void pinmap_init(void)
 {
 
+    ui_set_current_page(UI_PAGE_PINMAP);
     lv_obj_clean(lv_scr_act());
     apply_page_bg();
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
@@ -1278,6 +1499,7 @@ void pinmap_init(void)
 
 void power_init(void)
 {
+    ui_set_current_page(UI_PAGE_POWER);
     lv_obj_clean(lv_scr_act());
     apply_page_bg();
 
@@ -1497,6 +1719,7 @@ void power_init(void)
 void pwm_init(void)
 {
 
+    ui_set_current_page(UI_PAGE_PWM);
     lv_obj_clean(lv_scr_act());
     apply_page_bg();
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
@@ -1643,6 +1866,7 @@ void pwm_init(void)
 void uarthelper_init(void)
 {
 
+    ui_set_current_page(UI_PAGE_UART);
     lv_obj_clean(lv_scr_act());
     apply_page_bg();
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
@@ -1765,6 +1989,7 @@ void uarthelper_init(void)
 void i2c_init(void)
 {
 
+    ui_set_current_page(UI_PAGE_I2C);
     lv_obj_clean(lv_scr_act());
     apply_page_bg();
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
@@ -1859,6 +2084,7 @@ void i2c_init(void)
 void voltmeter_init(void)
 {
 
+    ui_set_current_page(UI_PAGE_VOLTMETER);
     lv_obj_clean(lv_scr_act());
     apply_page_bg();
     ina266_flag = 1;
@@ -1931,6 +2157,7 @@ void voltmeter_init(void)
 void DSO_init(void)
 {
 
+    ui_set_current_page(UI_PAGE_DSO);
     lv_obj_clean(lv_scr_act());
     apply_page_bg();
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
@@ -2050,6 +2277,7 @@ static void wireless_uart_clear_event_cb(lv_event_t *e)
 void wirelessuart_init(void)
 {
 
+    ui_set_current_page(UI_PAGE_WIRELESS_UART);
     lv_obj_clean(lv_scr_act());
     apply_page_bg();
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
@@ -2186,6 +2414,7 @@ void wirelessuart_init(void)
 void FREcount_init(void)
 {
 
+    ui_set_current_page(UI_PAGE_FRECOUNT);
     lv_obj_clean(lv_scr_act());
     apply_page_bg();
     lv_obj_add_event_cb(lv_scr_act(), event_handler_back, LV_EVENT_ALL, NULL);
@@ -2254,6 +2483,7 @@ void FREcount_init(void)
 
 void readme_init(void)
 {
+    ui_set_current_page(UI_PAGE_README);
     lv_obj_clean(lv_scr_act());
     apply_page_bg();
     lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
@@ -2363,10 +2593,15 @@ void readme_init(void)
     configure_swipe_back_for_current_screen(false);
 }
 
-static void setting_volume_slider_event_cb(lv_event_t *e)
+static void setting_volume_option_event_cb(lv_event_t *e)
 {
+    if (lv_event_get_code(e) != LV_EVENT_CLICKED)
+    {
+        return;
+    }
+
     lv_obj_t *target = lv_event_get_target(e);
-    int value = lv_slider_get_value(target);
+    int value = (int)(intptr_t)lv_event_get_user_data(e);
     if (value < 1)
     {
         value = 1;
@@ -2375,66 +2610,910 @@ static void setting_volume_slider_event_cb(lv_event_t *e)
     {
         value = 4;
     }
+
     buzzer_volume_level = value;
     persist_buzzer_volume_level(value);
 
-    lv_obj_t *value_label = (lv_obj_t *)lv_event_get_user_data(e);
+    lv_obj_t *value_label = (lv_obj_t *)lv_obj_get_user_data(target);
     if (value_label)
     {
         lv_label_set_text_fmt(value_label, "L%d", value);
     }
+
+    lv_obj_t *row = lv_obj_get_parent(target);
+    if (!row)
+    {
+        return;
+    }
+
+    uint32_t row_child_count = lv_obj_get_child_cnt(row);
+    for (uint32_t idx = 0; idx < row_child_count; idx++)
+    {
+        lv_obj_t *option_btn = lv_obj_get_child(row, idx);
+        if (!option_btn || lv_obj_get_user_data(option_btn) != value_label)
+        {
+            continue;
+        }
+
+        bool is_active = option_btn == target;
+        lv_obj_set_style_bg_color(option_btn, lv_color_hex(is_active ? UI_COLOR_PRIMARY : UI_COLOR_CARD), LV_PART_MAIN);
+        lv_obj_set_style_border_color(option_btn, lv_color_hex(is_active ? UI_COLOR_PRIMARY : UI_COLOR_BORDER), LV_PART_MAIN);
+        lv_obj_set_style_border_width(option_btn, is_active ? 3 : 2, LV_PART_MAIN);
+
+        lv_obj_t *option_label = lv_obj_get_child(option_btn, 0);
+        if (option_label)
+        {
+            lv_obj_set_style_text_color(option_label, lv_color_hex(is_active ? UI_COLOR_CARD : UI_COLOR_TEXT), 0);
+        }
+    }
+}
+
+static void setting_theme_switch_event_cb(lv_event_t *e)
+{
+    if (lv_event_get_code(e) != LV_EVENT_VALUE_CHANGED)
+    {
+        return;
+    }
+
+    lv_obj_t *theme_switch = lv_event_get_target(e);
+    bool dark_enabled = lv_obj_has_state(theme_switch, LV_STATE_CHECKED);
+    ui_apply_theme_mode(dark_enabled ? UI_THEME_DARK : UI_THEME_LIGHT, true);
+}
+
+static void setting_touch_debug_timer_cb(lv_timer_t *timer)
+{
+    (void)timer;
+    if (g_current_page != UI_PAGE_SETTING)
+    {
+        return;
+    }
+
+    if (!setting_touch_debug_dot || !lv_obj_is_valid(setting_touch_debug_dot) ||
+        !setting_touch_debug_label || !lv_obj_is_valid(setting_touch_debug_label))
+    {
+        return;
+    }
+
+    if (!g_touch_debug_pressed)
+    {
+        lv_obj_add_flag(setting_touch_debug_dot, LV_OBJ_FLAG_HIDDEN);
+        lv_label_set_text(setting_touch_debug_label, "Touch: released");
+        return;
+    }
+
+    lv_obj_clear_flag(setting_touch_debug_dot, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_pos(setting_touch_debug_dot, g_touch_debug_x - 6, g_touch_debug_y - 6);
+    lv_label_set_text_fmt(setting_touch_debug_label, "Touch: %d,%d raw:%d,%d",
+                          g_touch_debug_x,
+                          g_touch_debug_y,
+                          g_touch_debug_raw_x,
+                          g_touch_debug_raw_y);
+}
+
+static lv_obj_t *create_settings_card(lv_obj_t *parent, lv_coord_t height)
+{
+    lv_obj_t *card = lv_obj_create(parent);
+    lv_obj_remove_style(card, 0, LV_PART_SCROLLBAR);
+    lv_obj_set_width(card, LV_PCT(100));
+    lv_obj_set_height(card, height);
+    lv_obj_set_style_bg_color(card, lv_color_hex(UI_COLOR_CARD), LV_PART_MAIN);
+    lv_obj_set_style_border_color(card, lv_color_hex(UI_COLOR_BORDER), LV_PART_MAIN);
+    lv_obj_set_style_border_width(card, 2, LV_PART_MAIN);
+    lv_obj_set_style_radius(card, 18, LV_PART_MAIN);
+    lv_obj_set_style_shadow_width(card, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(card, 14, LV_PART_MAIN);
+    lv_obj_set_scroll_dir(card, LV_DIR_NONE);
+    lv_obj_clear_flag(card, LV_OBJ_FLAG_SCROLLABLE);
+    return card;
+}
+
+static lv_obj_t *create_action_button(lv_obj_t *parent, const char *text, lv_coord_t width, lv_coord_t height)
+{
+    lv_obj_t *button = lv_btn_create(parent);
+    lv_obj_set_size(button, width, height);
+    lv_obj_set_style_radius(button, 12, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(button, lv_color_hex(UI_COLOR_PRIMARY), LV_PART_MAIN);
+    lv_obj_set_style_border_color(button, lv_color_hex(UI_COLOR_PRIMARY), LV_PART_MAIN);
+    lv_obj_set_style_border_width(button, 2, LV_PART_MAIN);
+    lv_obj_set_style_shadow_width(button, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(button, LV_OBJ_FLAG_SCROLLABLE);
+
+    lv_obj_t *label = lv_label_create(button);
+    lv_label_set_text(label, text);
+    lv_obj_set_style_text_color(label, lv_color_hex(UI_COLOR_CARD), 0);
+    lv_obj_set_style_text_font(label, &lv_font_montserrat_16, 0);
+    lv_obj_center(label);
+    return button;
+}
+
+static void touch_calibration_open_event_cb(lv_event_t *e)
+{
+    if (lv_event_get_code(e) != LV_EVENT_CLICKED)
+    {
+        return;
+    }
+
+    touch_calibration_init();
+}
+
+static lv_coord_t touch_calibration_clamp_coord(lv_coord_t value, lv_coord_t min_value, lv_coord_t max_value)
+{
+    if (value < min_value)
+    {
+        return min_value;
+    }
+    if (value > max_value)
+    {
+        return max_value;
+    }
+    return value;
+}
+
+static int touch_calibration_step_index(touch_calibration_step_t step);
+static touch_calibration_step_t touch_calibration_step_from_index(int index);
+
+static lv_point_t touch_calibration_target_point(touch_calibration_step_t step)
+{
+    lv_coord_t width = touch_calibration_screen_w;
+    lv_coord_t height = touch_calibration_screen_h;
+
+    int index = touch_calibration_step_index(step);
+    if (index < 0 || index >= 25) {
+        return (lv_point_t){width / 2, height / 2};
+    }
+
+    int col = index % 5;
+    int row = index / 5;
+
+    // Use a small margin for the outer edge points to avoid physical bezel issues
+    // but keep them as close to the edge as possible for proper calibration
+    lv_coord_t margin_x = width > 36 ? 8 : 4;
+    lv_coord_t margin_y = height > 36 ? 8 : 4;
+
+    lv_coord_t x_coords[5] = {
+        margin_x,
+        width / 4,
+        width / 2,
+        (width * 3) / 4,
+        width - 1 - margin_x
+    };
+
+    lv_coord_t y_coords[5] = {
+        margin_y,
+        height / 4,
+        height / 2,
+        (height * 3) / 4,
+        height - 1 - margin_y
+    };
+
+    return (lv_point_t){x_coords[col], y_coords[row]};
+}
+
+static lv_point_t touch_calibration_target_output_point(int index)
+{
+    lv_coord_t width = touch_calibration_screen_w;
+    lv_coord_t height = touch_calibration_screen_h;
+
+    if (index < 0 || index >= 25) {
+        return (lv_point_t){width / 2, height / 2};
+    }
+
+    int col = index % 5;
+    int row = index / 5;
+
+    // The mathematical target output should ideally be the exact 0, 25, 50, 75, 100% of the screen
+    lv_coord_t x_coords[5] = {
+        0,
+        width / 4,
+        width / 2,
+        (width * 3) / 4,
+        width - 1
+    };
+
+    lv_coord_t y_coords[5] = {
+        0,
+        height / 4,
+        height / 2,
+        (height * 3) / 4,
+        height - 1
+    };
+
+    return (lv_point_t){x_coords[col], y_coords[row]};
+}
+
+static int touch_calibration_step_index(touch_calibration_step_t step)
+{
+    for (int idx = 0; idx < kTouchCalibrationPointCount; idx++)
+    {
+        if (kTouchCalibrationCaptureSteps[idx] == step)
+        {
+            return idx;
+        }
+    }
+    return -1;
+}
+
+static touch_calibration_step_t touch_calibration_step_from_index(int index)
+{
+    if (index < 0 || index >= kTouchCalibrationPointCount)
+    {
+        return TOUCH_CAL_STEP_VERIFY;
+    }
+    return kTouchCalibrationCaptureSteps[index];
+}
+
+static void touch_calibration_reset_samples(void)
+{
+    for (int idx = 0; idx < kTouchCalibrationPointCount; idx++)
+    {
+        touch_calibration_sum_x[idx] = 0;
+        touch_calibration_sum_y[idx] = 0;
+        touch_calibration_sample_count[idx] = 0;
+    }
+    touch_calibration_waiting_release = false;
+}
+
+static void touch_calibration_cleanup_timer(void)
+{
+    if (touch_calibration_timer)
+    {
+        lv_timer_del(touch_calibration_timer);
+        touch_calibration_timer = NULL;
+    }
+}
+
+static void touch_calibration_enter_step(touch_calibration_step_t step)
+{
+    g_touch_calibration_step = step;
+    touch_calibration_waiting_release = false;
+    touch_calibration_step_enter_ms = lv_tick_get();
+
+    if (touch_calibration_primary_btn)
+    {
+        lv_obj_add_flag(touch_calibration_primary_btn, LV_OBJ_FLAG_HIDDEN);
+    }
+    if (touch_calibration_secondary_btn)
+    {
+        lv_obj_add_flag(touch_calibration_secondary_btn, LV_OBJ_FLAG_HIDDEN);
+    }
+    if (touch_calibration_tertiary_btn)
+    {
+        lv_obj_add_flag(touch_calibration_tertiary_btn, LV_OBJ_FLAG_HIDDEN);
+    }
+    if (touch_calibration_quaternary_btn)
+    {
+        lv_obj_add_flag(touch_calibration_quaternary_btn, LV_OBJ_FLAG_HIDDEN);
+    }
+    if (touch_calibration_quinary_btn)
+    {
+        lv_obj_add_flag(touch_calibration_quinary_btn, LV_OBJ_FLAG_HIDDEN);
+    }
+
+    if (touch_calibration_target)
+    {
+        if (step == TOUCH_CAL_STEP_INTRO || step == TOUCH_CAL_STEP_VERIFY)
+        {
+            lv_obj_add_flag(touch_calibration_target, LV_OBJ_FLAG_HIDDEN);
+        }
+        else
+        {
+            lv_point_t point = touch_calibration_target_point(step);
+            lv_obj_clear_flag(touch_calibration_target, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_set_pos(touch_calibration_target, point.x - 14, point.y - 14);
+            lv_obj_move_foreground(touch_calibration_target);
+        }
+    }
+
+    if (touch_calibration_hint_label)
+    {
+        if (step == TOUCH_CAL_STEP_INTRO)
+        {
+            lv_label_set_text(touch_calibration_hint_label,
+                              "Touch the edge cross center at each step.\nRelease after every sample.");
+        }
+        else if (step == TOUCH_CAL_STEP_VERIFY)
+        {
+            lv_label_set_text(touch_calibration_hint_label,
+                              "Calibration saved automatically. Check the red dot, or retry/reset.");
+        }
+        else
+        {
+            int step_index = touch_calibration_step_index(step);
+            if (step_index >= 0 && step_index < kTouchCalibrationPointCount)
+            {
+                lv_label_set_text_fmt(touch_calibration_hint_label,
+                                      "Step %d/%d: touch %s",
+                                      step_index + 1,
+                                      kTouchCalibrationPointCount,
+                                      kTouchCalibrationStepLabels[step_index]);
+            }
+            else
+            {
+                lv_label_set_text(touch_calibration_hint_label, "Status: waiting touch");
+            }
+        }
+    }
+
+    if (touch_calibration_status_label)
+    {
+        switch (step)
+        {
+        case TOUCH_CAL_STEP_INTRO:
+            lv_label_set_text(touch_calibration_status_label, "Status: ready");
+            break;
+        case TOUCH_CAL_STEP_VERIFY:
+            lv_label_set_text(touch_calibration_status_label, "Status: verification");
+            break;
+        default:
+            lv_label_set_text(touch_calibration_status_label, "Status: waiting touch");
+            break;
+        }
+    }
+
+    if (step == TOUCH_CAL_STEP_INTRO)
+    {
+        lv_coord_t intro_y = touch_calibration_screen_h - 44;
+        if (touch_calibration_primary_btn)
+        {
+            lv_obj_set_pos(touch_calibration_primary_btn, 16, intro_y);
+            lv_obj_clear_flag(touch_calibration_primary_btn, LV_OBJ_FLAG_HIDDEN);
+        }
+        if (touch_calibration_secondary_btn)
+        {
+            lv_obj_set_pos(touch_calibration_secondary_btn, touch_calibration_screen_w - 16 - 86, intro_y);
+            lv_obj_clear_flag(touch_calibration_secondary_btn, LV_OBJ_FLAG_HIDDEN);
+        }
+    }
+    else if (step == TOUCH_CAL_STEP_VERIFY)
+    {
+        lv_coord_t bottom_y = touch_calibration_screen_h - 40;
+        lv_coord_t action_y = touch_calibration_screen_h - 82;
+        lv_coord_t action_x = (touch_calibration_screen_w - (74 * 3 + 8 * 2)) / 2;
+        if (touch_calibration_secondary_btn)
+        {
+            lv_obj_set_pos(touch_calibration_secondary_btn, (touch_calibration_screen_w - 86) / 2, bottom_y);
+            lv_obj_clear_flag(touch_calibration_secondary_btn, LV_OBJ_FLAG_HIDDEN);
+        }
+        if (touch_calibration_tertiary_btn)
+        {
+            lv_obj_set_pos(touch_calibration_tertiary_btn, action_x, action_y);
+            lv_obj_clear_flag(touch_calibration_tertiary_btn, LV_OBJ_FLAG_HIDDEN);
+        }
+        if (touch_calibration_quaternary_btn)
+        {
+            lv_obj_set_pos(touch_calibration_quaternary_btn, action_x + 82, action_y);
+            lv_obj_clear_flag(touch_calibration_quaternary_btn, LV_OBJ_FLAG_HIDDEN);
+        }
+        if (touch_calibration_quinary_btn)
+        {
+            lv_obj_set_pos(touch_calibration_quinary_btn, action_x + 164, action_y);
+            lv_obj_clear_flag(touch_calibration_quinary_btn, LV_OBJ_FLAG_HIDDEN);
+        }
+    }
+}
+
+static void touch_calibration_start_event_cb(lv_event_t *e)
+{
+    if (lv_event_get_code(e) != LV_EVENT_CLICKED)
+    {
+        return;
+    }
+
+    touch_calibration_reset_samples();
+    touch_calibration_enter_step(touch_calibration_step_from_index(0));
+}
+
+static void touch_calibration_back_event_cb(lv_event_t *e)
+{
+    if (lv_event_get_code(e) != LV_EVENT_CLICKED)
+    {
+        return;
+    }
+
+    setting_init();
+}
+
+static void touch_calibration_retry_event_cb(lv_event_t *e)
+{
+    if (lv_event_get_code(e) != LV_EVENT_CLICKED)
+    {
+        return;
+    }
+
+    touch_calibration_reset_samples();
+    touch_calibration_enter_step(touch_calibration_step_from_index(0));
+}
+
+static void touch_calibration_reset_default_event_cb(lv_event_t *e)
+{
+    if (lv_event_get_code(e) != LV_EVENT_CLICKED)
+    {
+        return;
+    }
+
+    clear_touch_calibration();
+    touch_calibration_reset_samples();
+    touch_calibration_enter_step(TOUCH_CAL_STEP_VERIFY);
+    if (touch_calibration_status_label)
+    {
+        lv_label_set_text(touch_calibration_status_label, "Status: default mapping restored");
+    }
+}
+
+static void touch_calibration_save_event_cb(lv_event_t *e)
+{
+    if (e && lv_event_get_code(e) != LV_EVENT_CLICKED)
+    {
+        return;
+    }
+
+    lv_point_t raw_points[kTouchCalibrationPointCount];
+    lv_point_t target_points[kTouchCalibrationPointCount];
+
+    for (int idx = 0; idx < kTouchCalibrationPointCount; idx++)
+    {
+        int sample_count = touch_calibration_sample_count[idx];
+        if (sample_count == 0)
+        {
+            if (touch_calibration_status_label)
+            {
+                lv_label_set_text(touch_calibration_status_label, "Status: calibration data incomplete");
+            }
+            return;
+        }
+
+        raw_points[idx].x = touch_calibration_sum_x[idx] / sample_count;
+        raw_points[idx].y = touch_calibration_sum_y[idx] / sample_count;
+        target_points[idx] = touch_calibration_target_output_point(idx);
+    }
+
+    if (!persist_touch_calibration_points(raw_points, target_points, kTouchCalibrationPointCount))
+    {
+        if (touch_calibration_status_label)
+        {
+            lv_label_set_text(touch_calibration_status_label, "Status: invalid calibration, retry");
+        }
+        return;
+    }
+
+    if (touch_calibration_status_label)
+    {
+        lv_label_set_text(touch_calibration_status_label, "Status: calibration saved");
+    }
+}
+
+static void touch_calibration_timer_cb(lv_timer_t *timer)
+{
+    (void)timer;
+    if (g_current_page != UI_PAGE_TOUCH_CALIBRATION)
+    {
+        return;
+    }
+
+    if (touch_calibration_debug_label)
+    {
+        if (!g_touch_debug_pressed)
+        {
+            lv_label_set_text(touch_calibration_debug_label, "raw:-,- rot:-,- out:-,-");
+        }
+        else
+        {
+            lv_label_set_text_fmt(touch_calibration_debug_label,
+                                  "raw:%d,%d rot:%d,%d out:%d,%d",
+                                  g_touch_debug_raw_x,
+                                  g_touch_debug_raw_y,
+                                  g_touch_debug_rotated_x,
+                                  g_touch_debug_rotated_y,
+                                  g_touch_debug_x,
+                                  g_touch_debug_y);
+        }
+    }
+
+    if (touch_calibration_dot)
+    {
+        if (!g_touch_debug_pressed)
+        {
+            lv_obj_add_flag(touch_calibration_dot, LV_OBJ_FLAG_HIDDEN);
+        }
+        else
+        {
+            lv_obj_clear_flag(touch_calibration_dot, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_set_pos(touch_calibration_dot, g_touch_debug_x - 6, g_touch_debug_y - 6);
+            lv_obj_move_foreground(touch_calibration_dot);
+        }
+    }
+
+    if (g_touch_calibration_step == TOUCH_CAL_STEP_INTRO || g_touch_calibration_step == TOUCH_CAL_STEP_VERIFY)
+    {
+        return;
+    }
+
+    if (lv_tick_elaps(touch_calibration_step_enter_ms) < kTouchCalibrationStepDelayMs)
+    {
+        return;
+    }
+
+    if (!g_touch_debug_pressed)
+    {
+        touch_calibration_waiting_release = false;
+        return;
+    }
+
+    int step_index = touch_calibration_step_index(g_touch_calibration_step);
+    if (step_index < 0 || step_index >= kTouchCalibrationPointCount)
+    {
+        return;
+    }
+
+    if (touch_calibration_waiting_release)
+    {
+        return;
+    }
+
+    touch_calibration_sum_x[step_index] += g_touch_debug_rotated_x;
+    touch_calibration_sum_y[step_index] += g_touch_debug_rotated_y;
+    touch_calibration_sample_count[step_index]++;
+    touch_calibration_waiting_release = true;
+
+    if (touch_calibration_status_label)
+    {
+        lv_label_set_text_fmt(touch_calibration_status_label,
+                              "Status: point %d sample %d/%d",
+                              step_index + 1,
+                              touch_calibration_sample_count[step_index],
+                              kTouchCalibrationSamplesPerPoint);
+    }
+
+    if (touch_calibration_sample_count[step_index] < kTouchCalibrationSamplesPerPoint)
+    {
+        return;
+    }
+
+    int next_step_index = step_index + 1;
+    if (next_step_index < kTouchCalibrationPointCount)
+    {
+        touch_calibration_enter_step(touch_calibration_step_from_index(next_step_index));
+        return;
+    }
+
+    touch_calibration_enter_step(TOUCH_CAL_STEP_VERIFY);
+    touch_calibration_save_event_cb(NULL);
+}
+
+void touch_calibration_init(void)
+{
+    clear_touch_calibration();
+    touch_calibration_reset_samples();
+    ui_set_current_page(UI_PAGE_TOUCH_CALIBRATION);
+    lv_obj_clean(lv_scr_act());
+    apply_page_bg();
+    configure_swipe_back_for_current_screen(false);
+    lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
+    touch_calibration_cleanup_timer();
+    touch_calibration_target = NULL;
+    touch_calibration_hint_label = NULL;
+    touch_calibration_status_label = NULL;
+    touch_calibration_debug_label = NULL;
+    touch_calibration_dot = NULL;
+    touch_calibration_primary_btn = NULL;
+    touch_calibration_secondary_btn = NULL;
+    touch_calibration_tertiary_btn = NULL;
+    touch_calibration_quaternary_btn = NULL;
+    touch_calibration_quinary_btn = NULL;
+
+    lv_disp_t *disp = lv_disp_get_default();
+    if (disp)
+    {
+        touch_calibration_screen_w = lv_disp_get_hor_res(disp);
+        touch_calibration_screen_h = lv_disp_get_ver_res(disp);
+    }
+
+    lv_obj_t *title = lv_label_create(lv_scr_act());
+    lv_label_set_text(title, "Touch Calibration");
+    lv_obj_set_style_text_color(title, lv_color_hex(UI_COLOR_TEXT), 0);
+    lv_obj_set_style_text_font(title, &lv_font_montserrat_22, 0);
+    lv_obj_set_pos(title, 14, 12);
+
+    touch_calibration_hint_label = lv_label_create(lv_scr_act());
+    lv_obj_set_width(touch_calibration_hint_label, touch_calibration_screen_w - 32);
+    lv_obj_set_pos(touch_calibration_hint_label, 14, 44);
+    lv_obj_set_style_text_color(touch_calibration_hint_label, lv_color_hex(UI_COLOR_TEXT), 0);
+    lv_obj_set_style_text_font(touch_calibration_hint_label, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_align(touch_calibration_hint_label, LV_TEXT_ALIGN_LEFT, 0);
+    lv_label_set_long_mode(touch_calibration_hint_label, LV_LABEL_LONG_WRAP);
+
+    touch_calibration_status_label = lv_label_create(lv_scr_act());
+    lv_obj_set_pos(touch_calibration_status_label, 14, 88);
+    lv_obj_set_style_text_color(touch_calibration_status_label, lv_color_hex(UI_COLOR_MUTED), 0);
+    lv_obj_set_style_text_font(touch_calibration_status_label, &lv_font_montserrat_12, 0);
+
+    touch_calibration_debug_label = lv_label_create(lv_scr_act());
+    lv_obj_set_width(touch_calibration_debug_label, touch_calibration_screen_w - 28);
+    lv_obj_set_pos(touch_calibration_debug_label, 14, 108);
+    lv_obj_set_style_text_color(touch_calibration_debug_label, lv_color_hex(UI_COLOR_MUTED), 0);
+    lv_obj_set_style_text_font(touch_calibration_debug_label, &lv_font_montserrat_10, 0);
+    lv_label_set_long_mode(touch_calibration_debug_label, LV_LABEL_LONG_WRAP);
+
+    lv_obj_t *target_container = lv_obj_create(lv_scr_act());
+    lv_obj_remove_style_all(target_container);
+    lv_obj_set_size(target_container, touch_calibration_screen_w, touch_calibration_screen_h);
+    lv_obj_set_pos(target_container, 0, 0);
+    lv_obj_set_style_bg_opa(target_container, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_clear_flag(target_container, LV_OBJ_FLAG_SCROLLABLE);
+
+    touch_calibration_target = lv_obj_create(target_container);
+    lv_obj_remove_style_all(touch_calibration_target);
+    lv_obj_set_size(touch_calibration_target, 28, 28);
+    lv_obj_set_style_radius(touch_calibration_target, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    lv_obj_set_style_border_color(touch_calibration_target, lv_color_hex(UI_COLOR_PRIMARY), LV_PART_MAIN);
+    lv_obj_set_style_border_width(touch_calibration_target, 3, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(touch_calibration_target, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_add_flag(touch_calibration_target, LV_OBJ_FLAG_HIDDEN);
+
+    lv_obj_t *cross_h = lv_obj_create(touch_calibration_target);
+    lv_obj_remove_style_all(cross_h);
+    lv_obj_set_size(cross_h, 18, 2);
+    lv_obj_set_style_bg_color(cross_h, lv_color_hex(UI_COLOR_PRIMARY), LV_PART_MAIN);
+    lv_obj_center(cross_h);
+
+    lv_obj_t *cross_v = lv_obj_create(touch_calibration_target);
+    lv_obj_remove_style_all(cross_v);
+    lv_obj_set_size(cross_v, 2, 18);
+    lv_obj_set_style_bg_color(cross_v, lv_color_hex(UI_COLOR_PRIMARY), LV_PART_MAIN);
+    lv_obj_center(cross_v);
+
+    touch_calibration_dot = lv_obj_create(lv_scr_act());
+    lv_obj_remove_style_all(touch_calibration_dot);
+    lv_obj_set_size(touch_calibration_dot, 12, 12);
+    lv_obj_set_style_radius(touch_calibration_dot, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(touch_calibration_dot, lv_color_hex(0xFF3B30), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(touch_calibration_dot, LV_OPA_90, LV_PART_MAIN);
+    lv_obj_set_style_border_color(touch_calibration_dot, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+    lv_obj_set_style_border_width(touch_calibration_dot, 2, LV_PART_MAIN);
+    lv_obj_add_flag(touch_calibration_dot, LV_OBJ_FLAG_HIDDEN | LV_OBJ_FLAG_IGNORE_LAYOUT);
+
+    lv_coord_t intro_y = touch_calibration_screen_h - 44;
+    lv_coord_t action_y = touch_calibration_screen_h - 82;
+    lv_coord_t action_x = (touch_calibration_screen_w - (74 * 3 + 8 * 2)) / 2;
+
+    touch_calibration_primary_btn = create_action_button(lv_scr_act(), "Start", 86, 34);
+    lv_obj_set_pos(touch_calibration_primary_btn, 16, intro_y);
+    lv_obj_add_event_cb(touch_calibration_primary_btn, touch_calibration_start_event_cb, LV_EVENT_CLICKED, NULL);
+
+    touch_calibration_secondary_btn = create_action_button(lv_scr_act(), "Back", 86, 34);
+    lv_obj_set_pos(touch_calibration_secondary_btn, touch_calibration_screen_w - 16 - 86, intro_y);
+    lv_obj_add_event_cb(touch_calibration_secondary_btn, touch_calibration_back_event_cb, LV_EVENT_CLICKED, NULL);
+
+    touch_calibration_tertiary_btn = create_action_button(lv_scr_act(), "Retry", 74, 34);
+    lv_obj_set_pos(touch_calibration_tertiary_btn, action_x, action_y);
+    lv_obj_add_event_cb(touch_calibration_tertiary_btn, touch_calibration_retry_event_cb, LV_EVENT_CLICKED, NULL);
+
+    touch_calibration_quaternary_btn = create_action_button(lv_scr_act(), "Reset", 74, 34);
+    lv_obj_set_pos(touch_calibration_quaternary_btn, action_x + 82, action_y);
+    lv_obj_add_event_cb(touch_calibration_quaternary_btn, touch_calibration_reset_default_event_cb, LV_EVENT_CLICKED, NULL);
+
+    touch_calibration_quinary_btn = create_action_button(lv_scr_act(), "Save", 74, 34);
+    lv_obj_set_pos(touch_calibration_quinary_btn, action_x + 164, action_y);
+    lv_obj_add_event_cb(touch_calibration_quinary_btn, touch_calibration_save_event_cb, LV_EVENT_CLICKED, NULL);
+
+    touch_calibration_reset_samples();
+    touch_calibration_enter_step(TOUCH_CAL_STEP_INTRO);
+    touch_calibration_timer = lv_timer_create(touch_calibration_timer_cb, 33, NULL);
 }
 
 void setting_init(void)
 {
+    ui_set_current_page(UI_PAGE_SETTING);
     lv_obj_clean(lv_scr_act());
     apply_page_bg();
     configure_swipe_back_for_current_screen(false);
+    lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
+
+    if (setting_touch_debug_timer)
+    {
+        lv_timer_del(setting_touch_debug_timer);
+        setting_touch_debug_timer = NULL;
+    }
+    setting_touch_debug_dot = NULL;
+    setting_touch_debug_label = NULL;
 
     lv_obj_t *title = lv_label_create(lv_scr_act());
-    lv_label_set_text(title, "#006D77 setting#");
-    lv_label_set_recolor(title, true);
+    lv_label_set_text(title, "Settings");
+    lv_obj_set_style_text_color(title, lv_color_hex(UI_COLOR_TEXT), 0);
     lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
-    lv_obj_set_pos(title, 12, 16);
+    lv_obj_set_pos(title, 14, 12);
 
-    lv_obj_t *desc = lv_label_create(lv_scr_act());
-    lv_label_set_text(desc, "Buzzer Volume");
-    lv_obj_set_style_text_font(desc, &lv_font_montserrat_20, 0);
-    lv_obj_set_pos(desc, 12, 62);
+    setting_touch_debug_label = lv_label_create(lv_scr_act());
+    lv_label_set_text(setting_touch_debug_label, "Touch: released");
+    lv_obj_set_style_text_color(setting_touch_debug_label, lv_color_hex(UI_COLOR_MUTED), 0);
+    lv_obj_set_style_text_font(setting_touch_debug_label, &lv_font_montserrat_10, 0);
+    lv_obj_set_pos(setting_touch_debug_label, 14, 34);
 
-    lv_obj_t *volume_slider = lv_slider_create(lv_scr_act());
-    lv_obj_set_size(volume_slider, 230, 16);
-    lv_obj_set_pos(volume_slider, 20, 116);
-    lv_slider_set_range(volume_slider, 1, 4);
-    lv_slider_set_value(volume_slider, buzzer_volume_level, LV_ANIM_OFF);
-    lv_obj_set_style_bg_color(volume_slider, lv_color_hex(UI_COLOR_PRIMARY_SOFT), LV_PART_MAIN);
-    lv_obj_set_style_bg_color(volume_slider, lv_color_hex(UI_COLOR_PRIMARY), LV_PART_INDICATOR);
-    lv_obj_set_style_bg_color(volume_slider, lv_color_hex(UI_COLOR_CARD), LV_PART_KNOB);
+    setting_touch_debug_dot = lv_obj_create(lv_scr_act());
+    lv_obj_remove_style_all(setting_touch_debug_dot);
+    lv_obj_set_size(setting_touch_debug_dot, 12, 12);
+    lv_obj_set_style_radius(setting_touch_debug_dot, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(setting_touch_debug_dot, lv_color_hex(0xFF3B30), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(setting_touch_debug_dot, LV_OPA_90, LV_PART_MAIN);
+    lv_obj_set_style_border_color(setting_touch_debug_dot, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+    lv_obj_set_style_border_width(setting_touch_debug_dot, 2, LV_PART_MAIN);
+    lv_obj_add_flag(setting_touch_debug_dot, LV_OBJ_FLAG_HIDDEN | LV_OBJ_FLAG_IGNORE_LAYOUT);
+    lv_obj_move_foreground(setting_touch_debug_dot);
 
-    lv_obj_t *value_label = lv_label_create(lv_scr_act());
-    lv_label_set_text_fmt(value_label, "L%d", buzzer_volume_level);
-    lv_obj_set_style_text_font(value_label, &lv_font_montserrat_22, 0);
-    lv_obj_set_pos(value_label, 258, 106);
+    setting_touch_debug_timer = lv_timer_create(setting_touch_debug_timer_cb, 33, NULL);
 
-    lv_obj_add_event_cb(volume_slider, setting_volume_slider_event_cb, LV_EVENT_VALUE_CHANGED, value_label);
+    lv_obj_t *content = lv_obj_create(lv_scr_act());
+    lv_obj_remove_style(content, 0, LV_PART_SCROLLBAR);
+    lv_obj_set_size(content, 268, 224);
+    lv_obj_set_pos(content, 10, 50);
+    lv_obj_set_style_bg_opa(content, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_border_width(content, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(content, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_row(content, 12, LV_PART_MAIN);
+    lv_obj_set_style_pad_bottom(content, 8, LV_PART_MAIN);
+    lv_obj_set_flex_flow(content, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_scroll_dir(content, LV_DIR_VER);
+    lv_obj_add_flag(content, LV_OBJ_FLAG_SCROLLABLE);
 
-    const int slider_x = 20;
-    const int slider_w = 230;
-    const int scale_y = 145;
-    const int step = slider_w / 3;
-    for (int idx = 0; idx < 4; idx++)
+    lv_obj_t *theme_card = create_settings_card(content, 54);
+    lv_obj_set_layout(theme_card, LV_LAYOUT_FLEX);
+    lv_obj_set_flex_flow(theme_card, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(theme_card, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    lv_obj_t *theme_left = lv_obj_create(theme_card);
+    lv_obj_remove_style_all(theme_left);
+    lv_obj_set_size(theme_left, 154, 26);
+    lv_obj_set_style_bg_opa(theme_left, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_border_width(theme_left, 0, LV_PART_MAIN);
+    lv_obj_set_layout(theme_left, LV_LAYOUT_FLEX);
+    lv_obj_set_flex_flow(theme_left, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(theme_left, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_column(theme_left, 10, LV_PART_MAIN);
+    lv_obj_clear_flag(theme_left, LV_OBJ_FLAG_SCROLLABLE);
+
+    lv_obj_t *theme_title = lv_label_create(theme_left);
+    lv_label_set_text(theme_title, "Theme");
+    lv_obj_set_style_text_color(theme_title, lv_color_hex(UI_COLOR_TEXT), 0);
+    lv_obj_set_style_text_font(theme_title, &lv_font_montserrat_18, 0);
+
+    lv_obj_t *theme_status_chip = lv_obj_create(theme_left);
+    lv_obj_remove_style(theme_status_chip, 0, LV_PART_SCROLLBAR);
+    lv_obj_set_size(theme_status_chip, 74, 24);
+    lv_obj_set_style_radius(theme_status_chip, 12, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(theme_status_chip, lv_color_hex(UI_COLOR_PRIMARY_SOFT), LV_PART_MAIN);
+    lv_obj_set_style_border_width(theme_status_chip, 0, LV_PART_MAIN);
+    lv_obj_set_style_shadow_width(theme_status_chip, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(theme_status_chip, LV_OBJ_FLAG_SCROLLABLE);
+
+    lv_obj_t *theme_status_label = lv_label_create(theme_status_chip);
+    lv_label_set_text(theme_status_label, g_ui_theme_mode == UI_THEME_DARK ? "Dark" : "Light");
+    lv_obj_set_style_text_color(theme_status_label, lv_color_hex(UI_COLOR_PRIMARY), 0);
+    lv_obj_set_style_text_font(theme_status_label, &lv_font_montserrat_14, 0);
+    lv_obj_center(theme_status_label);
+
+    lv_obj_t *theme_switch = lv_switch_create(theme_card);
+    lv_obj_set_style_bg_color(theme_switch, lv_color_hex(UI_COLOR_PRIMARY_SOFT), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(theme_switch, lv_color_hex(UI_COLOR_PRIMARY), LV_PART_INDICATOR);
+    lv_obj_set_style_bg_color(theme_switch, lv_color_hex(UI_COLOR_CARD), LV_PART_KNOB);
+    if (g_ui_theme_mode == UI_THEME_DARK)
     {
-        lv_obj_t *tick_label = lv_label_create(lv_scr_act());
-        lv_label_set_text_fmt(tick_label, "%d", idx + 1);
-        lv_obj_set_style_text_font(tick_label, &lv_font_montserrat_16, 0);
-        lv_obj_set_pos(tick_label, slider_x + idx * step - 4, scale_y);
+        lv_obj_add_state(theme_switch, LV_STATE_CHECKED);
+    }
+    lv_obj_add_event_cb(theme_switch, setting_theme_switch_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+
+    lv_obj_t *volume_card = create_settings_card(content, 96);
+
+    lv_obj_t *volume_header = lv_obj_create(volume_card);
+    lv_obj_remove_style_all(volume_header);
+    lv_obj_set_size(volume_header, LV_PCT(100), 26);
+    lv_obj_set_pos(volume_header, 0, -6);
+    lv_obj_set_style_bg_opa(volume_header, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_border_width(volume_header, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(volume_header, 0, LV_PART_MAIN);
+    lv_obj_set_layout(volume_header, LV_LAYOUT_FLEX);
+    lv_obj_set_flex_flow(volume_header, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(volume_header, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    lv_obj_t *volume_title = lv_label_create(volume_header);
+    lv_label_set_text(volume_title, "Buzzer Volume");
+    lv_obj_set_style_text_color(volume_title, lv_color_hex(UI_COLOR_TEXT), 0);
+    lv_obj_set_style_text_font(volume_title, &lv_font_montserrat_18, 0);
+
+    lv_obj_t *value_label = lv_label_create(volume_header);
+    lv_label_set_text_fmt(value_label, "L%d", buzzer_volume_level);
+    lv_obj_set_style_text_color(value_label, lv_color_hex(UI_COLOR_PRIMARY), 0);
+    lv_obj_set_style_text_font(value_label, &lv_font_montserrat_20, 0);
+
+    static lv_style_t setting_volume_btn_style;
+    static lv_style_t setting_volume_btn_focus_style;
+    static bool setting_volume_btn_style_ready = false;
+    if (!setting_volume_btn_style_ready)
+    {
+        lv_style_init(&setting_volume_btn_style);
+        lv_style_set_bg_color(&setting_volume_btn_style, lv_color_hex(UI_COLOR_CARD));
+        lv_style_set_border_color(&setting_volume_btn_style, lv_color_hex(UI_COLOR_BORDER));
+        lv_style_set_border_width(&setting_volume_btn_style, 2);
+        lv_style_set_radius(&setting_volume_btn_style, 10);
+        lv_style_set_shadow_width(&setting_volume_btn_style, 0);
+
+        lv_style_init(&setting_volume_btn_focus_style);
+        lv_style_set_border_color(&setting_volume_btn_focus_style, lv_color_hex(UI_COLOR_PRIMARY));
+        lv_style_set_border_width(&setting_volume_btn_focus_style, 3);
+
+        setting_volume_btn_style_ready = true;
+    }
+    else
+    {
+        lv_style_set_bg_color(&setting_volume_btn_style, lv_color_hex(UI_COLOR_CARD));
+        lv_style_set_border_color(&setting_volume_btn_style, lv_color_hex(UI_COLOR_BORDER));
+        lv_style_set_border_width(&setting_volume_btn_style, 2);
+        lv_style_set_radius(&setting_volume_btn_style, 10);
+
+        lv_style_set_border_color(&setting_volume_btn_focus_style, lv_color_hex(UI_COLOR_PRIMARY));
+        lv_style_set_border_width(&setting_volume_btn_focus_style, 3);
     }
 
-    lv_obj_t *tip_label = lv_label_create(lv_scr_act());
-    lv_label_set_text(tip_label, "Double click PUSH to back");
-    lv_obj_set_style_text_font(tip_label, &lv_font_montserrat_14, 0);
-    lv_obj_set_style_text_color(tip_label, lv_color_hex(UI_COLOR_MUTED), 0);
-    lv_obj_set_pos(tip_label, 12, 205);
+    lv_obj_t *option_row = lv_obj_create(volume_card);
+    lv_obj_remove_style_all(option_row);
+    lv_obj_set_size(option_row, 232, 36);
+    lv_obj_align_to(option_row, volume_header, LV_ALIGN_OUT_BOTTOM_MID, 0, 8);
+    lv_obj_set_style_bg_opa(option_row, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_border_width(option_row, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(option_row, LV_OBJ_FLAG_SCROLLABLE);
+
+    for (int idx = 0; idx < 4; idx++)
+    {
+        int level = idx + 1;
+        bool is_active = level == buzzer_volume_level;
+
+        lv_obj_t *segment_btn = lv_btn_create(option_row);
+        lv_obj_set_size(segment_btn, 52, 36);
+        lv_obj_set_pos(segment_btn, idx * 60, 0);
+        lv_obj_add_style(segment_btn, &setting_volume_btn_style, 0);
+        lv_obj_add_style(segment_btn, &setting_volume_btn_focus_style, LV_STATE_FOCUSED);
+        lv_obj_set_style_bg_color(segment_btn, lv_color_hex(is_active ? UI_COLOR_PRIMARY : UI_COLOR_CARD), LV_PART_MAIN);
+        lv_obj_set_style_border_color(segment_btn, lv_color_hex(is_active ? UI_COLOR_PRIMARY : UI_COLOR_BORDER), LV_PART_MAIN);
+        lv_obj_set_style_border_width(segment_btn, is_active ? 3 : 2, LV_PART_MAIN);
+        lv_obj_set_ext_click_area(segment_btn, 8);
+        lv_obj_clear_flag(segment_btn, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_set_user_data(segment_btn, value_label);
+        lv_obj_add_event_cb(segment_btn, setting_volume_option_event_cb, LV_EVENT_CLICKED, (void *)(intptr_t)level);
+
+        lv_obj_t *segment_label = lv_label_create(segment_btn);
+        lv_label_set_text_fmt(segment_label, "L%d", level);
+        lv_obj_set_style_text_color(segment_label, lv_color_hex(is_active ? UI_COLOR_CARD : UI_COLOR_TEXT), 0);
+        lv_obj_set_style_text_font(segment_label, &lv_font_montserrat_16, 0);
+        lv_obj_center(segment_label);
+    }
+
+    lv_obj_t *touch_calibration_card = create_settings_card(content, 68);
+
+    lv_obj_t *touch_calibration_header = lv_obj_create(touch_calibration_card);
+    lv_obj_remove_style_all(touch_calibration_header);
+    lv_obj_set_size(touch_calibration_header, 154, 44);
+    lv_obj_set_pos(touch_calibration_header, 0, 0);
+    lv_obj_set_style_bg_opa(touch_calibration_header, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_border_width(touch_calibration_header, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(touch_calibration_header, 0, LV_PART_MAIN);
+    lv_obj_set_layout(touch_calibration_header, LV_LAYOUT_FLEX);
+    lv_obj_set_flex_flow(touch_calibration_header, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(touch_calibration_header, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
+    lv_obj_clear_flag(touch_calibration_header, LV_OBJ_FLAG_SCROLLABLE);
+
+    lv_obj_t *touch_calibration_title = lv_label_create(touch_calibration_header);
+    lv_label_set_text(touch_calibration_title, "Touch Calibration");
+    lv_obj_set_style_text_color(touch_calibration_title, lv_color_hex(UI_COLOR_TEXT), 0);
+    lv_obj_set_style_text_font(touch_calibration_title, &lv_font_montserrat_18, 0);
+
+    lv_obj_t *touch_calibration_desc = lv_label_create(touch_calibration_header);
+    lv_label_set_text(touch_calibration_desc, "Fix touch accuracy");
+    lv_obj_set_style_text_color(touch_calibration_desc, lv_color_hex(UI_COLOR_MUTED), 0);
+    lv_obj_set_style_text_font(touch_calibration_desc, &lv_font_montserrat_12, 0);
+
+    lv_obj_t *touch_calibration_start_btn = create_action_button(touch_calibration_card, "Start", 78, 36);
+    lv_obj_align(touch_calibration_start_btn, LV_ALIGN_RIGHT_MID, 0, 0);
+    lv_obj_set_ext_click_area(touch_calibration_start_btn, 8);
+    lv_obj_add_event_cb(touch_calibration_start_btn, touch_calibration_open_event_cb, LV_EVENT_CLICKED, NULL);
 
     configure_swipe_back_for_current_screen(false);
 }
@@ -2442,8 +3521,7 @@ void setting_init(void)
 void ui_init(void)
 {
     // 设置显示主题
-    lv_theme_default_init(NULL, lv_color_hex(UI_COLOR_BG), lv_color_hex(UI_COLOR_PRIMARY), false, NULL);
-    lv_obj_add_event_cb(lv_scr_act(), longpress_event_handler_back, LV_EVENT_LONG_PRESSED, NULL);
+    lv_theme_default_init(NULL, lv_color_hex(UI_COLOR_BG), lv_color_hex(UI_COLOR_PRIMARY), g_ui_theme_mode == UI_THEME_DARK, NULL);
     create_boot_animation();
 
     // lv_obj_set_style_border_color(lv_scr_act(), lv_color_white(), LV_PART_MAIN | LV_STATE_DEFAULT);

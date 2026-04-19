@@ -517,6 +517,12 @@ void configure_swipe_back_for_current_screen(bool enabled)
     while (lv_obj_remove_event_cb(screen, event_handler_back))
     {
     }
+
+    if (!enabled)
+    {
+        return;
+    }
+
     lv_obj_add_event_cb(screen, event_handler_back, LV_EVENT_ALL, NULL);
     enable_gesture_bubble_recursive(screen);
 }
